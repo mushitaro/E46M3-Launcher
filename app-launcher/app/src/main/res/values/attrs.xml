@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="DotMatrixView">
+        <!-- Square pixel size and the gap between pixels, in device px.
+             The design uses (4,1) for the clock and temperature, (2,1) for the
+             date, source and RPM label. -->
+        <attr name="dotSize" format="integer" />
+        <attr name="dotGap" format="integer" />
+        <attr name="litColor" format="color" />
+        <attr name="android:text" />
+    </declare-styleable>
+</resources>

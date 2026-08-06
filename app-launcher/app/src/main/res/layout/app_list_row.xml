@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  One app row: a 44px initial badge, an 18px gap, and the name.
+
+  The 1px rule under each row is part of the row's background drawable rather
+  than a View of its own — see d_al_row.xml. Two Views per row, not three.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/d_al_row_h"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@drawable/d_al_row"
+    android:clickable="true"
+    android:focusable="true">
+
+    <TextView
+        android:id="@+id/app_initial"
+        android:layout_width="@dimen/d_al_badge"
+        android:layout_height="@dimen/d_al_badge"
+        android:background="@drawable/d_al_badge"
+        android:gravity="center"
+        android:textColor="@color/d_al_badge_fg"
+        android:textSize="@dimen/d_al_badge_size"
+        android:fontFamily="sans-serif-condensed"
+        android:includeFontPadding="false"
+        android:maxLines="1" />
+
+    <TextView
+        android:id="@+id/app_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="@dimen/d_al_row_gap"
+        android:textColor="@color/d_al_name"
+        android:textSize="@dimen/d_al_name_size"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:includeFontPadding="false" />
+</LinearLayout>

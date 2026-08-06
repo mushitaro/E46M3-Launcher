@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The TUNER key's mark: the app's own icon, in the console's own ink.
+
+  Source: `C:\Users\kazuh\E46M3CSL_TuningTool\public\icon.svg` — the ///M stripes
+  the tool ships as its favicon. What was here before was a generic tuning-dial
+  glyph out of the design file, which described a category rather than naming the
+  thing the key opens.
+
+  Geometry is that file's three quadrilaterals on its 32-unit canvas, scaled by
+  0.75 to the 24-unit viewport the console icons use and shifted 0.75 left so
+  the ink is centred (the source runs x 2..32, drawn hard against its own right
+  edge).
+
+    icon.svg                      here
+    M2 30 8 30 16 2 10 2 Z    ->  M0.75 22.5 H5.25 L11.25 1.5 H6.75 Z
+    M10 30 16 30 24 2 18 2 Z  ->  M6.75 22.5 H11.25 L17.25 1.5 H12.75 Z
+    M18 30 24 30 32 2 26 2 Z  ->  M12.75 22.5 H17.25 L23.25 1.5 H18.75 Z
+
+  ## White, not the tricolour
+
+  The source icon's three stripes are ///M blue, navy and red, and they are not
+  reproduced. Every icon on this console is one flat tone that swaps between
+  #FFFFFF by day and #C6C3BD at night; a three-colour mark here would be the
+  only object on the fascia that does not obey that, which is a louder statement
+  about the design system than it is about TUNER. The mark still reads — three
+  raked bars at the ///M rake is the silhouette — and the key is the only one on
+  the M console at that position, so nothing depends on the colour to identify
+  it.
+
+  Filled with @color/d_icon rather than left untinted: ConsoleKeys.applyNight
+  lays a SRC_IN filter over this at runtime, so the declared colour only matters
+  before the first swap. Naming the same token keeps the two in step.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@color/d_icon"
+        android:pathData="M0.75 22.5 H5.25 L11.25 1.5 H6.75 Z" />
+    <path
+        android:fillColor="@color/d_icon"
+        android:pathData="M6.75 22.5 H11.25 L17.25 1.5 H12.75 Z" />
+    <path
+        android:fillColor="@color/d_icon"
+        android:pathData="M12.75 22.5 H17.25 L23.25 1.5 H18.75 Z" />
+</vector>

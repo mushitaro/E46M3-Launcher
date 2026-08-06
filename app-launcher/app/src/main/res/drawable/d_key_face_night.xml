@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The night variant of d_key_face. Same geometry and the same two 1px inset
+  bands; only the gradient stops differ, exactly as the design's applyVars()
+  swaps its m3-b1 / b2 / b1a / b2a custom properties when isNight() is true.
+
+  The M key has no night variant on purpose — the design leaves #CE1533/#920A21
+  hardcoded, because the brand mark is not a light that dims with the cabin.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_pressed="true">
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:angle="270"
+                        android:startColor="@color/d_key_top_pressed_night"
+                        android:endColor="@color/d_key_bottom_pressed_night"
+                        android:type="linear" />
+                    <corners android:radius="@dimen/d_key_r" />
+                </shape>
+            </item>
+            <item android:height="2px" android:gravity="top">
+                <shape android:shape="rectangle">
+                    <solid android:color="#B3000000" />
+                </shape>
+            </item>
+            <item android:height="1px" android:gravity="bottom">
+                <shape android:shape="rectangle">
+                    <solid android:color="#0AFFFFFF" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+    <item>
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:angle="270"
+                        android:startColor="@color/d_key_top_night"
+                        android:endColor="@color/d_key_bottom_night"
+                        android:type="linear" />
+                    <corners android:radius="@dimen/d_key_r" />
+                </shape>
+            </item>
+            <item android:height="1px" android:gravity="top">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/d_key_hi" />
+                </shape>
+            </item>
+            <item android:height="1px" android:gravity="bottom">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/d_key_lo" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</selector>

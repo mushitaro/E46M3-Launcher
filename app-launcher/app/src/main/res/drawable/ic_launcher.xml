@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The ///M slash mark on a black field.
+
+  This is the TSUNAGI ///M brand motif, and it is a DIFFERENT mark from the
+  stepped "M" glyph that goes on the M button (that one arrives in Phase 2, as a
+  VectorDrawable traced from the user's own logo).
+
+  The middle stripe is indigo-400 #9B84E8, not the logo navy #2B115A: the navy is
+  1.33:1 on black and reads as a missing stripe rather than a dark one. Both
+  sibling apps already carry this same substitution.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
+
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M0,0 L32,0 L32,32 L0,32 Z" />
+    <path
+        android:fillColor="#FF008AC9"
+        android:pathData="M2,30 L8,30 L16,2 L10,2 Z" />
+    <path
+        android:fillColor="#FF9B84E8"
+        android:pathData="M10,30 L16,30 L24,2 L18,2 Z" />
+    <path
+        android:fillColor="#FFF11A22"
+        android:pathData="M18,30 L24,30 L32,2 L26,2 Z" />
+</vector>

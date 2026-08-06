@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The dimming veil laid over a key while it sinks out of the console.
+
+  The design uses `filter: brightness(.05)` on the key itself. Android Views have
+  no filter property; the two ways to get one are a hardware layer with a
+  ColorMatrix layer-paint, or a black overlay. Over an OPAQUE key face the two
+  are arithmetically identical — brightness(k) is dst*k, and black at alpha (1-k)
+  composites to exactly dst*k — so this takes the overlay, because animating a
+  child View's alpha is a pure RenderNode property (no offscreen texture, no
+  display-list re-record) while a layer paint forces an offscreen buffer per key
+  and there are twenty of them moving at once.
+
+  Radius matches the key face; without it the veil's square corners would show
+  over the key's rounded ones.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#FF000000" />
+    <corners android:radius="@dimen/d_key_r" />
+</shape>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The Apple CarPlay mark, without its rounded-square container: the C with the
+  play triangle inside it.
+
+  Path taken verbatim from Wikimedia Commons `Apple CarPlay Logo.svg`, which is
+  tagged PD-ineligible — the shape is held to be too simple to carry copyright.
+  Apple's trademark still applies; labelling the key that launches CarPlay with
+  the CarPlay mark is exactly the nominative use that permits.
+
+  Simple Icons, the usual source for monochrome brand glyphs, does not carry
+  CarPlay — Apple's marks have been withdrawn from that set — which is why this
+  one comes from elsewhere.
+
+  Three things done to the source, all mechanical:
+
+   - The container square is dropped, as asked. It was the only stroked element,
+     so what remains is pure fill.
+   - The source layers a stroked open arc over the filled band that draws the
+     same C. Only the filled band is kept; the two are redundant, and doubling
+     them thickens the glyph.
+   - VectorDrawable viewports always start at the origin, so the group translates
+     the glyph back from the source's offset viewBox. The viewport is then sized
+     so the C occupies 80% of it, which is roughly where the design's own key
+     icons sit inside their 24-unit box — a circle at the same bounding size
+     reads larger than the line glyphs beside it, so it is given a little more
+     margin than the Android Auto mark.
+
+  The C's bounds are a circle of radius 44.707 about (85.225, 85.256), i.e.
+  x 40.518..129.932, y 40.549..129.963 — 89.414 across. At 80% that needs a
+  111.77 box with 11.18 of margin on each side.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="111.77"
+    android:viewportHeight="111.77">
+    <group
+        android:translateX="-29.338"
+        android:translateY="-29.369">
+        <path
+            android:fillColor="@color/d_icon"
+            android:pathData="M85.225,129.963c-24.652,0 -44.707,-20.055 -44.707,-44.707s20.055,-44.707 44.707,-44.707c14.269,0 27.798,6.901 36.195,18.46a2.498,2.498 0 0 1 -4.041,2.935C109.92,51.674 97.9,45.542 85.225,45.542c-21.898,0 -39.713,17.815 -39.713,39.713 0,21.897 17.815,39.713 39.713,39.713 12.649,0 24.654,-6.11 32.117,-16.347a2.497,2.497 0 0 1 4.034,2.941c-8.397,11.523 -21.912,18.401 -36.151,18.401zM77.088,66.12c-0.384,-0.283 -0.824,-0.533 -1.185,-0.533a1.66,1.66 0 0 0 -1.659,1.659v35.421a1.66,1.66 0 0 0 2.534,1.407c0.311,-0.196 30.316,-17.307 30.607,-17.561 0.35,-0.304 0.571,-0.752 0.571,-1.252 0,-0.43 -0.163,-0.821 -0.431,-1.116 -0.304,-0.333 -29.936,-17.656 -30.437,-18.025z" />
+    </group>
+</vector>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Which USB devices this app offers to handle on attach.
+
+  Vendor only, no product id, for the same reason KdcanLink matches the same way:
+  missing the cable is a silent failure the owner cannot diagnose, while matching
+  one FTDI device too many costs nothing.
+
+    1027 = 0x0403  FTDI      (FT232R and friends — genuine K+DCAN cables)
+    6790 = 0x1A86  WCH       (CH340 — what clone cables carry)
+
+  Claiming the attach intent does two things beyond politeness: it stops Torque
+  Pro launching itself every time the diagnostic cable goes in, and it makes the
+  system grant this package persistent permission for the device, so the runtime
+  permission dialog stops appearing on every connect.
+-->
+<resources>
+    <usb-device vendor-id="1027" />
+    <usb-device vendor-id="6790" />
+</resources>

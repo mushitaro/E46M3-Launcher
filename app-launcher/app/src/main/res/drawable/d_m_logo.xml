@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The owner's stepped-M mark, white, for the M key.
+
+  The design ships this as `assets/m-logo-white.png`. It is reproduced here as a
+  VectorDrawable instead: the glyph is a single axis-aligned staircase polygon
+  with no curves, so the vector is exact rather than an approximation, and it
+  costs a few hundred bytes instead of a bitmap on a 2GB device.
+
+  The path was reconstructed by scanline analysis of the owner's master art
+  (iCloudDrive/M/Logo) and then corrected for two asymmetries about x=744 that
+  the reconstruction had introduced: 1017 -> 1014 (mirror of 474) and 916 -> 915
+  (mirror of 573). Every other pair was already exact: 343/1145, 590/898,
+  730/758, 386/1102. This is a designed, mirror-symmetric mark, so the noise was
+  removed rather than preserved.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20.54dp"
+    android:height="20dp"
+    android:viewportWidth="1488"
+    android:viewportHeight="1449">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M0,0 H343 V118 H474 V246 H590 V389 H730 V538 H758 V389 H898 V246 H1014 V118 H1145 V0 H1488 V1449 H1145 V607 H1102 V749 H915 V898 H573 V749 H386 V607 H343 V1449 H0 Z" />
+</vector>

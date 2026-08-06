@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  E46M3 ///M Launcher — home screen.
+
+  Transcribed from `E46M3 Launcher v2.dc.html`. The canvas is 1024x600 device
+  pixels, exactly this panel's resolution, so every position here is in px and
+  maps 1:1 to the design (see values/design.xml for why px rather than dp).
+
+  Keys, sockets and blanking plates are NOT in this file. They are identical
+  apart from position, icon and action, so they are built in code from two
+  tables (ui/ConsoleKeys.kt) rather than being copy-pasted thirty times.
+
+  ## Two readouts that never coexist
+
+  The LCD and the tachometer are both children at fixed positions — the LCD at
+  the home window, the tacho at the M-mode window — and they cross-fade rather
+  than move. The design's own timing is what permits it: the clock is gone by
+  140ms, the window travels 340..840ms, and the tacho only appears at 840ms, so
+  no content is ever on screen while the frame is in motion. Nothing has to be
+  re-laid-out, and nothing has to be clipped.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/d_carbon_base">
+
+    <!-- The carbon field. Baked at 1024x600 because a 45-degree-rotated 20px
+         lattice has a screen-space period of 20*sqrt(2), which is not an
+         integer — no small tile repeats seamlessly. Loaded as RGB_565 in code
+         to halve its footprint; it is fully opaque, so nothing is lost.
+
+         It sits OUTSIDE @id/console deliberately: opening the app list hides
+         the console and leaves this View untouched, which is how the owner's
+         "背景固定" requirement is met structurally rather than by matching two
+         backgrounds across a transition. -->
+    <ImageView
+        android:id="@+id/carbon"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitXY"
+        android:contentDescription="@null" />
+
+    <FrameLayout
+        android:id="@+id/console"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- The display window's frame, drawn rather than laid out: the design
+             animates left/top/width/height, and doing that with LayoutParams
+             would measure+layout every frame. See WindowFrameView. -->
+        <app.tsunagi.e46m3.launcher.ui.WindowFrameView
+            android:id="@+id/window_frame"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- Home readout, pinned to the home window's content box. -->
+        <FrameLayout
+            android:id="@+id/lcd"
+            android:layout_width="@dimen/d_win_w"
+            android:layout_height="@dimen/d_win_h"
+            android:layout_gravity="top|start"
+            android:layout_marginStart="@dimen/d_win_x"
+            android:layout_marginTop="@dimen/d_win_y"
+            android:paddingStart="@dimen/d_win_pad_h"
+            android:paddingEnd="@dimen/d_win_pad_h"
+            android:paddingTop="@dimen/d_win_pad_v"
+            android:paddingBottom="@dimen/d_win_pad_v">
+
+            <!-- Clock and temperature sit on the top edge, date and source on the
+                 bottom edge: the design uses `justify-content: space-between` on a
+                 column, with the first row bottom-aligned and the second top-aligned. -->
+            <app.tsunagi.e46m3.launcher.ui.DotMatrixView
+                android:id="@+id/lcd_clock"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|start"
+                app:dotSize="4"
+                app:dotGap="1" />
+
+            <app.tsunagi.e46m3.launcher.ui.DotMatrixView
+                android:id="@+id/lcd_temp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|end"
+                app:dotSize="4"
+                app:dotGap="1" />
+
+            <app.tsunagi.e46m3.launcher.ui.DotMatrixView
+                android:id="@+id/lcd_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|start"
+                app:dotSize="2"
+                app:dotGap="1" />
+
+            <app.tsunagi.e46m3.launcher.ui.DotMatrixView
+                android:id="@+id/lcd_source"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|end"
+                app:dotSize="2"
+                app:dotGap="1" />
+        </FrameLayout>
+
+        <!-- M-mode readout, pinned to the enlarged window. Draws its own
+             contents in the design's window-local coordinates. -->
+        <app.tsunagi.e46m3.launcher.ui.TachView
+            android:id="@+id/tach"
+            android:layout_width="@dimen/d_win_m_w"
+            android:layout_height="@dimen/d_win_m_h"
+            android:layout_gravity="top|start"
+            android:layout_marginStart="@dimen/d_win_m_x"
+            android:layout_marginTop="@dimen/d_win_m_y" />
+
+        <!-- Sockets first, then plates, then the two key sets: every face draws
+             over its own recess, and a key covers the plate behind it. -->
+        <FrameLayout
+            android:id="@+id/sockets"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <FrameLayout
+            android:id="@+id/plates"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <FrameLayout
+            android:id="@+id/keys"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <FrameLayout
+            android:id="@+id/keys_m"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
+
+    <!-- Inflated on the first APPS press, never before: it costs a RecyclerView
+         and an adapter, and this screen's cold start is paid on every boot,
+         every KILL_APPS and every low-memory kill. -->
+    <ViewStub
+        android:id="@+id/app_list_stub"
+        android:layout="@layout/app_list"
+        android:inflatedId="@+id/app_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+</FrameLayout>

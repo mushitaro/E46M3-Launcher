@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The initial badge beside each app name: 44x44, radius 5,
+     rgba(255,255,255,.08). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/d_al_badge_bg" />
+    <corners android:radius="@dimen/d_al_badge_r" />
+</shape>

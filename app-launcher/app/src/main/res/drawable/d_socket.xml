@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The recess a key sits in.
+
+  Design CSS on a 148x52 element:
+    background: #000
+    box-shadow: 0 0 0 6px #000,
+                0 0 0 7px rgba(255,255,255,.045),
+                inset 0 4px 9px rgba(0,0,0,1)
+
+  Those first two are OUTSET rings, so the socket view is the key plus 7px on
+  every side (162x66) and the faint rim lands on its outer edge. The inset
+  shadow is omitted: it darkens black against black.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#FF000000" />
+    <stroke android:width="1px" android:color="@color/d_socket_rim" />
+    <corners android:radius="@dimen/d_socket_r" />
+</shape>

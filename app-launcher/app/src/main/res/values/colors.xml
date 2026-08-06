@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  TSUNAGI ///M palette, transcribed verbatim from the shipping source of truth:
+    C:\Users\kazuh\E46M3CSL_TuningTool\src\app\globals.css
+
+  Android has no equivalent of Tailwind's namespace-clear idiom (setting a whole
+  colour namespace to `initial`), whose job is to make an undefined step fail
+  loudly instead of leaking a non-brand hue. The substitute is a convention, and
+  it is not optional:
+
+      LAYOUTS REFERENCE ONLY THE SEMANTIC ALIASES AT THE BOTTOM.
+
+  A missing alias is then a compile error rather than a silently wrong colour.
+-->
+<resources>
+    <!-- Neutral ramp — pure-black anchor, cool charcoal -->
+    <color name="m_slate_950">#FF000000</color>
+    <color name="m_slate_900">#FF0A0A0D</color>
+    <color name="m_slate_800">#FF17171C</color>
+    <color name="m_slate_700">#FF2A2A33</color>
+    <color name="m_slate_600">#FF4C4C58</color>
+    <color name="m_slate_500">#FF70707E</color>
+    <color name="m_slate_400">#FF9A9AA8</color>
+    <color name="m_slate_300">#FFC6C6CF</color>
+    <color name="m_slate_200">#FFDFDFE6</color>
+    <color name="m_slate_100">#FFF2F2F5</color>
+
+    <!-- M-blue — primary / interactive / OK -->
+    <color name="m_blue_400">#FF26AEE4</color>
+    <color name="m_blue_500">#FF0A9BDB</color>
+    <color name="m_blue_600">#FF0883BD</color>
+    <color name="m_blue_900">#FF06354E</color>
+
+    <!-- M-red — danger / error / heat -->
+    <color name="m_red_300">#FFF87A7F</color>
+    <color name="m_red_400">#FFF64A50</color>
+    <color name="m_red_500">#FFF11A22</color>
+    <color name="m_red_600">#FFD0121A</color>
+
+    <!-- M-violet — secondary / lineage / diagnostic / armed -->
+    <color name="m_indigo_300">#FFB9A6EE</color>
+    <color name="m_indigo_400">#FF9B84E8</color>
+    <color name="m_indigo_500">#FF7E63DB</color>
+    <color name="m_indigo_900">#FF2B115A</color>
+
+    <!-- ── Semantic aliases: the ONLY names layouts may reference ─────────── -->
+    <color name="m_base">@color/m_slate_950</color>
+    <color name="m_panel">@color/m_slate_900</color>
+    <color name="m_raised">@color/m_slate_800</color>
+    <color name="m_border">@color/m_slate_700</color>
+    <color name="m_text_muted">@color/m_slate_600</color>
+    <color name="m_text_label">@color/m_slate_500</color>
+    <color name="m_text_body">@color/m_slate_400</color>
+    <color name="m_text_strong">@color/m_slate_200</color>
+
+    <color name="m_accent_primary">@color/m_blue_400</color>
+    <color name="m_accent_diagnostic">@color/m_indigo_400</color>
+    <color name="m_accent_caution">@color/m_indigo_300</color>
+
+    <!-- Temperature is a reading, not a warning — color-system.md says so
+         explicitly. RPM is neither, so it stays neutral (m_text_body). -->
+    <color name="m_temp_value">@color/m_red_300</color>
+
+    <!-- The M button fill. red-600, NOT red-500, for two independent reasons:
+         (1) red-500 is the status/LED step and must stay unspent for real errors;
+         (2) measured — white on #F11A22 is 4.28:1 and FAILS 4.5:1, while white on
+             #D0121A is 5.55:1 and passes. The white knockout M is the whole point
+             of the button, so this is the only one of the two that works. -->
+    <color name="m_brand_fill">@color/m_red_600</color>
+
+    <!-- The tricolor stripe: the one place the brand appears permanently at full
+         saturation. The middle is indigo-400, NOT the logo navy #2B115A, which is
+         1.33:1 on black and reads as a gap between the blue and the red. -->
+    <color name="m_stripe_left">@color/m_blue_500</color>
+    <color name="m_stripe_mid">@color/m_indigo_400</color>
+    <color name="m_stripe_right">@color/m_red_500</color>
+</resources>

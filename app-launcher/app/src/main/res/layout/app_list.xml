@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The app list, from the design's `APPS` overlay.
+
+  ## The background is missing on purpose
+
+  The design paints its own carbon field here — the same weave, the same sheen,
+  the same vignette, at the same screen position as the home screen's. Rather
+  than decode a second 1024x600 bitmap to draw an identical image, this layer is
+  transparent and the console beneath it is hidden instead. The result is pixel
+  for pixel what the design specifies, costs nothing, and makes the owner's
+  "背景固定" requirement structural: the carbon is not matched across a
+  transition, it is literally the same View object that never moved.
+
+  `clickable` on the root is not decoration: without it, a tap landing between
+  two rows would fall through to a console key that is invisible but still laid
+  out underneath.
+
+  Fonts: the design asks for Saira Condensed. Android 8.1 ships no such face and
+  a webfont would have to be bundled for four glyphs, so the platform's
+  sans-serif-condensed (Roboto Condensed) stands in — the same genre at the same
+  width. App names deliberately use the plain system family, because they are
+  arbitrary text from PackageManager and must be free to fall back to the
+  device's CJK font.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/app_list"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:clickable="true"
+    android:focusable="true">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/d_al_header_h"
+        android:paddingStart="@dimen/d_al_pad_h"
+        android:paddingEnd="@dimen/d_al_pad_h">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start|center_vertical"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/applist_title"
+                android:textColor="@color/d_al_title"
+                android:textSize="@dimen/d_al_title_size"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-condensed"
+                android:letterSpacing="0.28"
+                android:includeFontPadding="false" />
+
+            <TextView
+                android:id="@+id/app_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/d_al_gap"
+                android:textColor="@color/d_al_count"
+                android:textSize="@dimen/d_al_count_size"
+                android:fontFamily="sans-serif-condensed"
+                android:letterSpacing="0.1"
+                android:includeFontPadding="false" />
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/app_close"
+            android:layout_width="@dimen/d_al_close_w"
+            android:layout_height="@dimen/d_al_close_h"
+            android:layout_gravity="end|center_vertical"
+            android:background="@drawable/d_al_close"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="@string/applist_close">
+
+            <ImageView
+                android:layout_width="@dimen/d_al_close_icon"
+                android:layout_height="@dimen/d_al_close_icon"
+                android:layout_gravity="center"
+                android:src="@drawable/d_ic_home_solid"
+                android:tint="@color/d_al_close_fg"
+                android:contentDescription="@null" />
+        </FrameLayout>
+    </FrameLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:background="@color/d_al_divider" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/app_grid"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingStart="@dimen/d_al_list_pad_h"
+        android:paddingEnd="@dimen/d_al_list_pad_h"
+        android:paddingTop="@dimen/d_al_list_pad_top"
+        android:paddingBottom="@dimen/d_al_list_pad_bottom"
+        android:scrollbars="none" />
+</LinearLayout>

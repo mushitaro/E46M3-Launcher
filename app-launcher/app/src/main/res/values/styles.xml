@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Type scale ported from the ///M system (typography.md).
+
+  Note android:letterSpacing is in EM, so tracking-widest (0.1em) -> 0.10.
+
+  Sizes are declared in dp, not sp. That is a deliberate deviation from the usual
+  Android advice, taken to serve design principle #3 (layout never jumps): a
+  system font-scale change would resize the clock and break the LCD's fixed
+  geometry. This is a single fixed panel with no accessibility font-scale user,
+  and configChanges already absorbs fontScale, so honouring sp would buy nothing.
+
+  Fonts are `monospace`/`sans-serif` placeholders until Phase 2 bundles the
+  subsetted Inter and JetBrains Mono into res/font (Android 8.1 has neither).
+-->
+<resources>
+
+    <style name="ConsoleButton">
+        <item name="android:layout_width">118dp</item>
+        <item name="android:layout_height">76dp</item>
+        <item name="android:background">@drawable/btn_console</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">10dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.15</item>
+        <item name="android:textColor">@color/m_text_body</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <!-- The recurring readout atom: a tiny uppercase label over a mono value.
+         `Readout` is a real base style, not just a naming prefix — Android's dot
+         notation means Readout.Label implicitly inherits from Readout, and AAPT
+         fails the build if that parent does not exist. -->
+    <style name="Readout">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="Readout.Label">
+        <item name="android:textSize">8dp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.15</item>
+        <item name="android:textColor">@color/m_text_muted</item>
+    </style>
+
+    <style name="Readout.Value">
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">22dp</item>
+        <item name="android:textColor">@color/m_text_body</item>
+    </style>
+
+    <style name="Readout.Unit">
+        <item name="android:textSize">11dp</item>
+        <item name="android:textColor">@color/m_text_label</item>
+    </style>
+
+    <!-- Provenance tag. A garage weather reading is not the car's outside-air
+         temperature, and must never be dressed as one. -->
+    <style name="Readout.Source">
+        <item name="android:textSize">8dp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.10</item>
+        <item name="android:textColor">@color/m_text_muted</item>
+    </style>
+</resources>

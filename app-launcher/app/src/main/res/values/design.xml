@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Geometry and colour transcribed from `E46M3 Launcher v2.dc.html`.
+
+  ## Why px and not dp
+
+  The design is authored on a 1024x600 canvas, which is exactly this panel's
+  physical resolution. Declaring these in px reproduces it 1:1 with no rounding
+  drift; converting to dp would divide every value by 1.5 and land most of them
+  on fractions (148px -> 98.67dp), which then round inconsistently.
+
+  Density independence buys nothing here: there is one panel, it is fixed, and
+  the app ships to no other device. This is a deliberate, bounded exception.
+-->
+<resources>
+
+    <!-- ── Palette ─────────────────────────────────────────────────────── -->
+    <color name="d_screen">#FF0A0B0C</color>
+    <!-- Matches the day weave's own base (tools/make_carbon.py cf0). Only ever
+         seen for the frame or two before the bitmap decodes, but a black flash
+         under a grey weave is exactly the kind of thing that reads as a fault. -->
+    <color name="d_carbon_base">#FF15171B</color>
+    <color name="d_text">#FFE8E5DF</color>
+    <color name="d_icon">#FFFFFFFF</color>
+    <color name="d_icon_night">#FFC6C3BD</color>
+
+    <!-- lcdColor: the design's default, and the accent for active-source marks -->
+    <color name="d_lit">#FFFF9A2E</color>
+
+    <!-- Key face gradient, and its pressed variant.
+         ⚠ These are NOT the design's #22252A/#181A1E. In direct sunlight that
+         face is 0.018 relative luminance against a 0.003 carbon field: the ratio
+         is fine on a desk and worthless through a windscreen, because reflected
+         daylight adds the same veiling luminance to both and collapses a 5.5:1
+         ratio to about 1.3:1. The keys stopped being findable on the car.
+
+         The weave was then lifted too (tools/make_carbon.py), so these went up
+         a second time to stay ahead of it. That pairing is the whole point:
+
+           weave base  0.0026 -> 0.0090     keys  0.052 -> 0.080 / 0.046
+           key : field under a 0.05 veil    2.03 : 1  ->  1.9 : 1
+
+         — the console keeps its separation while the fascia itself becomes
+         visible. Raising a background without raising what stands on it is how
+         you lose the buttons instead of finding them.
+
+         The night palette below is untouched. It never had the problem, and a
+         bright fascia at night is a fault of its own. -->
+    <color name="d_key_top">#FF4A505B</color>
+    <color name="d_key_bottom">#FF383D46</color>
+    <color name="d_key_top_pressed">#FF585F6B</color>
+    <color name="d_key_bottom_pressed">#FF444A55</color>
+
+    <!-- M key -->
+    <color name="d_m_top">#FFCE1533</color>
+    <color name="d_m_bottom">#FF920A21</color>
+    <color name="d_m_top_pressed">#FFB00E27</color>
+    <color name="d_m_bottom_pressed">#FF7C081B</color>
+
+    <!-- Night palette. The design's isNight() is hours < 6 || hours >= 18, and it
+         swaps the weave, the key gradients, the icon colour and the LCD tint. -->
+    <color name="d_lit_night">#CCFF9A2E</color>       <!-- rgba(lit, .8) -->
+    <color name="d_key_top_night">#FF1C1E22</color>
+    <color name="d_key_bottom_night">#FF141619</color>
+    <color name="d_key_top_pressed_night">#FF26282E</color>
+    <color name="d_key_bottom_pressed_night">#FF1B1D22</color>
+
+    <!-- No "dead key" tone any more. The design dimmed a key that could not
+         act; this console blanks its socket instead, which says the same thing
+         without leaving a control on screen that does nothing. Likewise no
+         static TUNER tab: the lamps report links, and TUNER is not one. -->
+
+    <color name="d_socket_rim">#0BFFFFFF</color>      <!-- rgba(255,255,255,.045) -->
+    <color name="d_key_hi">#1AFFFFFF</color>          <!-- inset 0 1px 0 rgba(255,255,255,.1) -->
+    <color name="d_key_lo">#8C000000</color>          <!-- inset 0 -1px 0 rgba(0,0,0,.55) -->
+    <color name="d_m_hi">#33FFFFFF</color>            <!-- rgba(255,255,255,.2) -->
+    <color name="d_m_lo">#66000000</color>            <!-- rgba(0,0,0,.4) -->
+    <color name="d_shift_light">#FFE8102F</color>
+
+    <!-- ── Geometry (device px) ─────────────────────────────────────────────
+         The keys are the design's 148x52 grown by 8%, which is the largest the
+         console goes without either narrowing a gap or changing a proportion:
+
+           key          148x52  ->  160x56    aspect 2.846 -> 2.857  (+0.4%)
+           column pitch    192  ->     204
+           row pitch        76  ->      80
+           side margin      54  ->      24
+
+         Every gap is carried through unchanged rather than merely "not made
+         worse" — 44px between key faces, 30px between sockets, 24px and 10px
+         vertically — because the pitch grew by exactly what the key did. All of
+         the extra width comes out of the two side margins, which is space the
+         design was leaving empty at the edges of the fascia.
+
+         The block is re-centred on its old vertical midpoint (379px) instead of
+         growing downwards, so it keeps its clearance from the M-mode window
+         above it. -->
+    <dimen name="d_key_w">160px</dimen>
+    <dimen name="d_key_h">56px</dimen>
+    <dimen name="d_key_r">8px</dimen>
+
+    <!-- The socket is the key plus the 6px black ring and the 1px rim beyond it.
+         The ring is NOT scaled with the key: it is a fixed physical detail of the
+         fascia, and widening it would eat the gap the keys just protected. -->
+    <dimen name="d_socket_pad">7px</dimen>
+    <dimen name="d_socket_w">174px</dimen>
+    <dimen name="d_socket_h">70px</dimen>
+    <dimen name="d_socket_r">15px</dimen>
+
+    <dimen name="d_row1_y">311px</dimen>
+    <dimen name="d_row2_y">391px</dimen>
+    <dimen name="d_col1_x">24px</dimen>
+    <dimen name="d_col2_x">228px</dimen>
+    <dimen name="d_col3_x">432px</dimen>
+    <dimen name="d_col4_x">636px</dimen>
+    <dimen name="d_col5_x">840px</dimen>
+
+    <!-- Display window, and the 10px black bezel the design casts around it. -->
+    <dimen name="d_win_x">292px</dimen>
+    <dimen name="d_win_y">157px</dimen>
+    <dimen name="d_win_w">440px</dimen>
+    <dimen name="d_win_h">100px</dimen>
+    <dimen name="d_win_r">9px</dimen>
+    <dimen name="d_bezel">10px</dimen>
+    <dimen name="d_bezel_x">282px</dimen>
+    <dimen name="d_bezel_y">147px</dimen>
+    <dimen name="d_bezel_w">460px</dimen>
+    <dimen name="d_bezel_h">120px</dimen>
+    <dimen name="d_bezel_r">19px</dimen>
+
+    <dimen name="d_win_pad_v">14px</dimen>
+    <dimen name="d_win_pad_h">18px</dimen>
+
+    <!-- Status lamp, top-left of the key. The design drew a 15x3 tab that simply
+         vanished when inactive; this is taller so the two states read at a
+         glance, and the off state is a dark window rather than nothing at all —
+         a lamp that is out still tells you the lamp is there. -->
+    <dimen name="d_act_x">13px</dimen>
+    <dimen name="d_act_y">10px</dimen>
+    <dimen name="d_act_w">16px</dimen>
+    <dimen name="d_act_h">7px</dimen>
+
+    <!-- Unlit: a recess, not a dimmed version of the lit colour. Amber at low
+         alpha reads as "half on", which is the one thing a status lamp must
+         never look like. -->
+    <color name="d_act_off">#99000000</color>
+
+    <dimen name="d_icon_size">28px</dimen>
+    <dimen name="d_m_logo_w">22px</dimen>
+
+    <!-- ── M mode ──────────────────────────────────────────────────────────
+         The display window grows to hold the tachometer. Nothing is ever drawn
+         inside it while it is moving: the clock has faded out by 140ms, the
+         window travels 340..840ms, and the tacho only appears at 840ms. That is
+         why the glass needs no resizing clip — see WindowFrameView.           -->
+    <dimen name="d_win_m_x">162px</dimen>
+    <dimen name="d_win_m_y">100px</dimen>
+    <dimen name="d_win_m_w">700px</dimen>
+    <dimen name="d_win_m_h">180px</dimen>
+
+    <!-- The carbon blanking plates that fill the two outer sockets in M mode.
+         `inset: 0` of the socket's inner rect, radius 5px. -->
+    <dimen name="d_plate_r">6px</dimen>
+    <color name="d_plate_hi">#12FFFFFF</color>        <!-- rgba(255,255,255,.07) -->
+    <color name="d_plate_lo">#99000000</color>        <!-- rgba(0,0,0,.6) -->
+
+    <!-- ── Tachometer ──────────────────────────────────────────────────────
+         29 segments, red from index 26, laid on the exponential sweep the
+         design computes per segment. Geometry is in TachView; only the palette
+         is here, and the unlit outlines are literal in the design (they do NOT
+         follow lcdColor), so they are literal here too. -->
+    <color name="d_tach_unlit">#33FF9A2E</color>      <!-- rgba(255,154,46,.2) -->
+    <color name="d_tach_unlit_red">#52E8102F</color>  <!-- rgba(232,16,47,.32) -->
+    <color name="d_tach_red">#FFE8102F</color>
+    <color name="d_tach_red_flash">#FFFF3A54</color>
+
+    <!-- The unlit outlines by day. 20% amber over black is 0.02 luminance; in
+         sunlight the empty part of the sweep simply is not there, so the gauge
+         reads as a short bar rather than a needle near the bottom of its range.
+         Doubling the alpha costs nothing at night because night keeps the
+         design's values above. -->
+    <color name="d_tach_unlit_day">#66FF9A2E</color>
+    <color name="d_tach_unlit_red_day">#8CE8102F</color>
+
+    <!-- ── M-mode temperature readouts ─────────────────────────────────────
+         Four channels beside the engine speed: coolant, oil, intake air and
+         outside air. The first three come from MSS54 live block 3 over the
+         K+DCAN cable; the fourth comes from the head unit's own CAN service and
+         is therefore the one that can be present while the other three are not.
+
+         Two rows of two, right of the RPM digits and above the RPM/shift-light
+         line, in the 700x180 M-mode window's own coordinates. The label tone is
+         derived from lcdColor in code rather than declared here, so it keeps
+         following the night dim instead of needing a second pair of constants
+         that could drift out of step with it. -->
+
+    <!-- ── App list ────────────────────────────────────────────────────── -->
+    <dimen name="d_al_header_h">62px</dimen>
+    <dimen name="d_al_pad_h">26px</dimen>
+    <dimen name="d_al_gap">16px</dimen>
+    <dimen name="d_al_close_w">46px</dimen>
+    <dimen name="d_al_close_h">34px</dimen>
+    <dimen name="d_al_close_r">3px</dimen>
+    <dimen name="d_al_close_icon">19px</dimen>
+    <dimen name="d_al_list_pad_h">20px</dimen>
+    <dimen name="d_al_list_pad_top">8px</dimen>
+    <dimen name="d_al_list_pad_bottom">18px</dimen>
+    <dimen name="d_al_col_gap">34px</dimen>
+    <dimen name="d_al_row_h">68px</dimen>
+    <dimen name="d_al_row_gap">18px</dimen>
+    <dimen name="d_al_badge">44px</dimen>
+    <dimen name="d_al_badge_r">5px</dimen>
+
+    <dimen name="d_al_title_size">17px</dimen>
+    <dimen name="d_al_count_size">12px</dimen>
+    <dimen name="d_al_badge_size">17px</dimen>
+    <dimen name="d_al_name_size">19px</dimen>
+
+    <color name="d_al_title">#FFF0EDE7</color>
+    <color name="d_al_count">#66E8E5DF</color>        <!-- rgba(232,229,223,.4) -->
+    <color name="d_al_name">#FFDCD8D1</color>
+    <color name="d_al_badge_bg">#14FFFFFF</color>     <!-- rgba(255,255,255,.08) -->
+    <color name="d_al_badge_fg">#B8FFFFFF</color>     <!-- rgba(255,255,255,.72) -->
+    <color name="d_al_divider">#1AFFFFFF</color>      <!-- rgba(255,255,255,.1)  -->
+    <color name="d_al_row_rule">#0EFFFFFF</color>     <!-- rgba(255,255,255,.055) -->
+    <color name="d_al_row_pressed">#0FFFFFFF</color>  <!-- rgba(255,255,255,.06) -->
+    <color name="d_al_close_bg">#0FFFFFFF</color>     <!-- rgba(255,255,255,.06) -->
+    <color name="d_al_close_bg_pressed">#21FFFFFF</color> <!-- rgba(255,255,255,.13) -->
+    <color name="d_al_close_fg">#D9E8E5DF</color>     <!-- rgba(232,229,223,.85) -->
+</resources>

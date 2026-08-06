@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  A console key face.
+
+  Design CSS:
+    background: linear-gradient(180deg, #22252a, #181a1e)
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.1),
+                inset 0 -1px 0 rgba(0,0,0,.55)
+  pressed:
+    background: linear-gradient(180deg, #2c3037, #20232a)
+    box-shadow: inset 0 2px 6px rgba(0,0,0,.7),
+                inset 0 -1px 0 rgba(255,255,255,.04)
+
+  The inset highlight/shadow are reproduced as 1px bands clipped to the top and
+  bottom edges. Android shape drawables have no inner-shadow primitive, and at
+  1px a hard band is what the CSS renders anyway.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_pressed="true">
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:angle="270"
+                        android:startColor="@color/d_key_top_pressed"
+                        android:endColor="@color/d_key_bottom_pressed"
+                        android:type="linear" />
+                    <corners android:radius="@dimen/d_key_r" />
+                </shape>
+            </item>
+            <!-- inset 0 2px 6px rgba(0,0,0,.7): a darker band at the top edge -->
+            <item android:height="2px" android:gravity="top">
+                <shape android:shape="rectangle">
+                    <solid android:color="#B3000000" />
+                </shape>
+            </item>
+            <item android:height="1px" android:gravity="bottom">
+                <shape android:shape="rectangle">
+                    <solid android:color="#0AFFFFFF" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+    <item>
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:angle="270"
+                        android:startColor="@color/d_key_top"
+                        android:endColor="@color/d_key_bottom"
+                        android:type="linear" />
+                    <corners android:radius="@dimen/d_key_r" />
+                </shape>
+            </item>
+            <item android:height="1px" android:gravity="top">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/d_key_hi" />
+                </shape>
+            </item>
+            <item android:height="1px" android:gravity="bottom">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/d_key_lo" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</selector>

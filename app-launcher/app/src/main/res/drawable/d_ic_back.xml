@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The M console's exit key.
+
+  A U-turn rather than the plain left arrow that was here before. The plain
+  arrow was correct and said nothing: it is the same glyph a browser uses for
+  "previous page", and on a console of switches it read as filler. This one says
+  "return the way you came", which is exactly what leaving the M console does —
+  it goes back to the fascia you opened it from, not to a home screen. The
+  physical HOME key already means that, which is why the design file's house
+  icon was wrong for this key in the first place.
+
+  Constructed rather than traced: head at (4.5, 9) with 5.5-unit barbs, shaft
+  right to x=14, a true semicircle of radius 5.5 about (14, 14.5) bulging to
+  x=19.5, then a 3-unit tail. That puts the ink inside x 3.55..20.45 and
+  y 2.55..20.95 — centred on the 24 viewport in x, a quarter-unit low in y,
+  which is the price of a symmetric semicircle and is a third of a pixel at the
+  size this is drawn.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:strokeColor="@color/d_icon"
+        android:strokeWidth="1.9"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M10 3.5 4.5 9l5.5 5.5" />
+    <path
+        android:strokeColor="@color/d_icon"
+        android:strokeWidth="1.9"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M4.5 9h9.5a5.5 5.5 0 0 1 0 11h-3" />
+</vector>

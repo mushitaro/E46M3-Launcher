@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The LCD glass. Pure black, radius 9px; the 10px bezel around it is a
+     separate view (see d_bezel.xml) because the design casts it as a spread
+     box-shadow rather than a border. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#FF000000" />
+    <corners android:radius="@dimen/d_win_r" />
+</shape>

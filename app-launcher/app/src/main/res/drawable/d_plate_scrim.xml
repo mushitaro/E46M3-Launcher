@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- d_key_scrim at the plate's own 5px radius. Same job, same reasoning. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#FF000000" />
+    <corners android:radius="@dimen/d_plate_r" />
+</shape>

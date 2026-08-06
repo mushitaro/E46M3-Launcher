@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  One app row. `border-bottom: 1px solid rgba(255,255,255,.055)` plus the
+  design's `style-active` press tint.
+
+  The rule is drawn as part of the row's background rather than as a divider
+  View so that a row costs exactly two Views (badge + name) instead of three,
+  and so it lines up with the row edge without depending on RecyclerView
+  decoration order.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/d_al_row_pressed" />
+                </shape>
+            </item>
+            <item android:height="1px" android:gravity="bottom">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/d_al_row_rule" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    <item>
+        <layer-list>
+            <item android:height="1px" android:gravity="bottom">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/d_al_row_rule" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</selector>

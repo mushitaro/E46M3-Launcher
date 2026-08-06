@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- App list header's close control: 46x34, radius 3, rgba(255,255,255,.06),
+     .13 while held. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/d_al_close_bg_pressed" />
+            <corners android:radius="@dimen/d_al_close_r" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/d_al_close_bg" />
+            <corners android:radius="@dimen/d_al_close_r" />
+        </shape>
+    </item>
+</selector>

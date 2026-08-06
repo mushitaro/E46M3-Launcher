@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Button markings are short Latin uppercase on purpose, and it is not an
+  anglicisation for its own sake: the real E46 console switches are marked
+  DSC / SPORT / EDC, and Inter carries no CJK glyphs, so a Japanese label would
+  fall back to a different face at a different weight and would make the
+  ///M chrome rules (uppercase + wide tracking) meaningless.
+
+  Japanese belongs where it is prose rather than a switch marking — the M menu,
+  the app-list header, the notice line. Those live in values-ja/.
+-->
+<resources>
+    <string name="app_name" translatable="false">E46M3 ///M</string>
+
+    <string name="btn_settings" translatable="false">SET</string>
+    <string name="btn_android_link" translatable="false">DROID</string>
+    <string name="btn_carplay" translatable="false">CARPLAY</string>
+    <string name="btn_bluetooth" translatable="false">BT</string>
+    <string name="btn_radio" translatable="false">RADIO</string>
+    <string name="btn_eq" translatable="false">EQ</string>
+    <string name="btn_video" translatable="false">VIDEO</string>
+    <string name="btn_maps" translatable="false">MAP</string>
+    <string name="btn_apps" translatable="false">APPS</string>
+    <string name="btn_m" translatable="false">M</string>
+
+    <!-- M mode. These never appear on the keys — the design's M console is icons
+         only — but TargetLauncher puts them in the notice line when a target
+         cannot be reached, so they still have to read as switch markings. -->
+    <string name="btn_tuner" translatable="false">TUNER</string>
+    <string name="btn_home" translatable="false">HOME</string>
+
+    <!-- Reserved-slot placeholders. Fixed width, so the value arriving later
+         never reflows anything. -->
+    <string name="lcd_temp_none" translatable="false">--.-</string>
+    <string name="lcd_rpm_none" translatable="false">----</string>
+    <string name="lcd_source_none" translatable="false">—</string>
+    <string name="lcd_label_out" translatable="false">OUT</string>
+    <string name="lcd_label_rpm" translatable="false">RPM</string>
+    <string name="lcd_unit_c" translatable="false">°C</string>
+
+    <!-- ── Digital Asset Links ──────────────────────────────────────────────
+         Our half of the two-sided statement that makes TUNER a Trusted Web
+         Activity instead of a Custom Tab. This half says which origin this app
+         claims; the other half lives at
+
+           https://mss54hp-csl-convert-tuner.tsunagi.app/.well-known/assetlinks.json
+
+         and names this app's package and the SHA-256 of its signing
+         certificate. Chrome fetches that file at launch and verifies both
+         directions. If either side is missing or wrong it does NOT report an
+         error — it silently shows the toolbar, which is the only symptom.
+
+         The certificate is the release key, applied to debug builds too (see
+         app/build.gradle.kts), so the fingerprint in that file never changes
+         and this pairing never has to be redone. -->
+    <string name="asset_statements" translatable="false">
+        [{
+          \"relation\": [\"delegate_permission/common.handle_all_urls\"],
+          \"target\": {
+            \"namespace\": \"web\",
+            \"site\": \"https://mss54hp-csl-convert-tuner.tsunagi.app\"
+          }
+        }]
+    </string>
+
+    <!-- App list. The header is a switch marking like the rest; the entries
+         themselves are whatever each package calls itself, which is where the
+         Japanese in this UI actually lives. -->
+    <string name="applist_title" translatable="false">APPS</string>
+    <string name="applist_close" translatable="false">ホームへ戻る</string>
+</resources>

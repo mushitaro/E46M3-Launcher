@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The M button. Identical geometry to its neighbours — same radius, same
+  hairline, same sink — differing only in the fill.
+
+  It is a permanent BRAND MARK, not a status: it reports nothing, and it is red
+  at boot, at idle, and whether the car is fine or on fire. A signal that never
+  varies carries no information, which is precisely why it does not compete with
+  red's alarm meaning. Three rules keep that true, and breaking any one of them
+  collapses the argument:
+
+    1. It never animates. Motion is this system's alarm channel.
+    2. No other red FILL appears on the home screen.
+    3. No glow, ring, or shadow — it reads as a painted physical button.
+
+  Fill is red-600 (#D0121A), not red-500 (#F11A22). red-500 is the status/LED
+  step and must stay unspent for real errors; and measured, white on #F11A22 is
+  4.28:1 (fails 4.5:1) while white on #D0121A is 5.55:1 (passes). The white
+  knockout M is the entire point of this button.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_pressed="true">
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/m_red_600" />
+                    <corners android:radius="10dp" />
+                    <stroke android:width="1dp" android:color="@color/m_border" />
+                </shape>
+            </item>
+            <item android:top="1dp" android:height="1dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/m_slate_950" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/m_brand_fill" />
+            <corners android:radius="10dp" />
+            <stroke android:width="1dp" android:color="@color/m_border" />
+        </shape>
+    </item>
+</selector>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- INTERNET / ACCESS_NETWORK_STATE are for the Phase 4 web tools and the
+         optional weather fallback. FOREGROUND_SERVICE is for the Phase 4 loopback
+         server: at targetSdk 27 background execution limits already apply, so a
+         plain started Service would be stopped ~1 minute after Chrome comes to
+         the front — long enough to pass a short test and fail in real use. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <!-- The screen between the boot animation and this launcher is
+         com.android.settings/.FallbackHome, whose theme sets
+         windowShowWallpaper=true — so the system wallpaper is what fills it.
+         Setting it to our own carbon is the only way to reach that frame.
+         See ui/BootWallpaper.kt. Both are normal permissions, granted at
+         install with no prompt; HINTS is for suggestDesiredDimensions, without
+         which the image is stretched to whatever width was last asked for. -->
+    <uses-permission android:name="android.permission.SET_WALLPAPER" />
+    <uses-permission android:name="android.permission.SET_WALLPAPER_HINTS" />
+
+    <!-- The M key only appears while the K+DCAN cable is plugged in, which means
+         reading the USB host bus. Not required: if a unit turns out to have no
+         host controller the app still installs, KdcanLink reports "absent", and
+         the socket simply stays blanked. -->
+    <uses-feature
+        android:name="android.hardware.usb.host"
+        android:required="false" />
+
+    <!-- Not required at targetSdk 27 (package visibility is API 30+), but if the
+         target is ever raised this block becomes mandatory or the app list goes
+         silently empty. Declared now so that change is a non-event. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
+    <application
+        android:allowBackup="false"
+        android:hardwareAccelerated="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:largeHeap="false"
+        android:supportsRtl="false"
+        android:theme="@style/Theme.M.Launcher">
+
+        <!-- Which origins this app claims. See @string/asset_statements. -->
+        <meta-data
+            android:name="asset_statements"
+            android:resource="@string/asset_statements" />
+
+        <activity
+            android:name=".HomeActivity"
+            android:clearTaskOnLaunch="true"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|smallestScreenSize|uiMode|locale|layoutDirection|fontScale|density|touchscreen"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:resizeableActivity="false"
+            android:screenOrientation="landscape"
+            android:stateNotNeeded="true"
+            android:windowSoftInputMode="adjustNothing">
+
+            <!-- HOME + DEFAULT is the pair that makes this a home-screen candidate.
+                 Without DEFAULT the implicit resolver will not select it — the
+                 classic "my launcher never appears in the chooser" bug.
+                 CATEGORY_LAUNCHER is deliberately absent: a launcher should not
+                 list itself. Development launches still work via
+                   adb shell am start -n app.tsunagi.e46m3.launcher/.HomeActivity -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- Handles the K+DCAN cable being plugged in. No window, finishes
+             immediately; see UsbAttachActivity for why this is a separate
+             activity rather than a filter on the home screen. -->
+        <activity
+            android:name=".UsbAttachActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay">
+
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/usb_device_filter" />
+        </activity>
+    </application>
+</manifest>

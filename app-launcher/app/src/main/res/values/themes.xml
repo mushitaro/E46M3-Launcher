@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Platform theme, not AppCompat. AppCompat exists to backport theming below
+      API 21; this ships to exactly one API 27 device, so it would be ~1 MB and a
+      resource-heavy theme inflation on the critical path of every launch.
+
+      windowBackground is a SOLID COLOUR, never a drawable. The starting window is
+      then one black fill: no white flash at boot, and no carbon bitmap decoded
+      before onCreate.
+    -->
+    <style name="Theme.M.Launcher" parent="@android:style/Theme.Material.NoActionBar.Fullscreen">
+        <item name="android:windowBackground">@color/m_base</item>
+        <item name="android:colorBackground">@color/m_base</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowDisablePreview">false</item>
+        <item name="android:textColor">@color/m_text_body</item>
+    </style>
+</resources>

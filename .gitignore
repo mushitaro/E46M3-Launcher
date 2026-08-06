@@ -1,0 +1,25 @@
+# ── Secrets / machine-local ───────────────────────────────────────────────
+# The keystore lives OUTSIDE this repo; these guard against an accidental copy.
+*.jks
+*.keystore
+keystore.properties
+local.properties
+
+# ── Gradle / Android build output ─────────────────────────────────────────
+.gradle/
+build/
+app-launcher/.gradle/
+app-launcher/build/
+app-launcher/app/build/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# ── Device extraction (~126 MB, reproducible via adb) ─────────────────────
+device-extract/
+
+# ── IDE ───────────────────────────────────────────────────────────────────
+.idea/
+*.iml
+.DS_Store
