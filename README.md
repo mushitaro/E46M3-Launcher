@@ -289,13 +289,28 @@ whole procedure exists to prevent.
 
 Do this if you want your own updates, your own signing key, or changes.
 
-**Requirements:** JDK 17, Android SDK with build-tools 35.0.0. Gradle 8.9 and
-AGP 8.7.3 come with the wrapper.
+**Requirements:** **JDK 17**, Android SDK with build-tools 35.0.0. Gradle 8.9
+and AGP 8.7.3 come with the wrapper.
 
 ```bash
 git clone https://github.com/mushitaro/E46M3-Launcher
 cd E46M3-Launcher/app-launcher
+export JAVA_HOME=/path/to/jdk-17      # or see below
+./gradlew assembleRelease
 ```
+
+`gradle.properties` deliberately does **not** pin `org.gradle.java.home` — an
+absolute path in a shared file works on one machine and fails on every clone. If
+you would rather not export `JAVA_HOME` each time, pin it per machine instead:
+
+```bash
+mkdir -p ~/.gradle
+echo 'org.gradle.java.home=/path/to/jdk-17' >> ~/.gradle/gradle.properties
+```
+
+The scripts in `tools/` do not need either: `tools/jdk.sh` finds a JDK 17 on its
+own, checking `JAVA_HOME`, then `~/.gradle/gradle.properties`, then `PATH`, then
+the usual Android Studio locations — and says what to do if it finds none.
 
 ### 1. Your own signing key
 
@@ -424,6 +439,26 @@ All under [`docs/`](docs/), in Japanese, with claims marked
 | [`05-tuner-resume-spec.md`](docs/05-tuner-resume-spec.md) | Reopening a web tool after the vehicle loses power |
 | [`06-tuner-webgl-fallback-spec.md`](docs/06-tuner-webgl-fallback-spec.md) | Working around the absence of WebGL on this unit |
 | [`07-ota-design.md`](docs/07-ota-design.md) | The update system: threat model, publish gates, what is still unverified |
+
+There is no `02`; nothing in the repository refers to one.
+
+### What the documents cite but the repository does not contain
+
+Several documents quote files under `device-extract/` — the unit's system
+properties, a bug report, its 23 vendor APKs, parts of its `/sdcard`. **That
+directory is not committed.** It is ~126 MB, it is entirely reproducible from
+any unit with `adb`, and it holds one owner's storage. Roughly how it was made:
+
+```bash
+adb shell getprop                     > device-extract/getprop_full.txt
+adb shell pm list packages -f         > device-extract/packages.txt
+adb bugreport                           device-extract/bugreport.zip
+adb pull /system/priv-app               device-extract/apks/
+```
+
+Those citations are provenance, not instructions. Nothing in the build, the
+tests or the release scripts reads that directory — a clone builds and tests
+without it.
 
 ---
 

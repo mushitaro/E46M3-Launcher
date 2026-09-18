@@ -1,0 +1,46 @@
+# Line endings, settled once.
+#
+# Git for Windows ships `core.autocrlf=true` in its SYSTEM config, so on this
+# machine the working tree gets CRLF while the repository is expected to hold
+# LF. Without the rules below that expectation is only a habit: seven files had
+# drifted to CRLF *in the repository*, which makes `git diff` report a whole-file
+# rewrite the moment anything touches one — the real change buried under two
+# hundred lines of invisible noise.
+#
+# `text=auto` puts LF in the repository for everything Git considers text, while
+# leaving the working tree to each platform's own convention. The exceptions
+# below are the files where the working tree's convention is not a preference.
+
+* text=auto
+
+# A batch file with LF line endings can fail in cmd.exe, notably around
+# multi-line constructs. This one is Gradle's own wrapper.
+*.bat           text eol=crlf
+
+# Shell scripts must be LF even when checked out on Windows: bash reads the
+# trailing CR as part of the command and reports things like
+# `$'\r': command not found`, which names neither the file nor the cause.
+# These run under Git Bash here and would run under a normal shell elsewhere.
+*.sh            text eol=lf
+gradlew         text eol=lf
+
+# Binary. Declared rather than detected, so a stray NUL-free header can never
+# get one of these normalised.
+*.png           binary
+*.jar           binary
+*.der           binary
+*.apk           binary
+*.jks           binary
+*.keystore      binary
+*.zip           binary
+*.so            binary
+
+# Not a secret, and not to be mangled: the OTA manifest's public key, in PEM.
+# Text, but its bytes are hashed by tools/release.sh GATE-3 against the DER
+# copy, so it stays LF everywhere.
+*.pem           text eol=lf
+
+# GitHub's language statistics otherwise call this a Python project, because
+# tools/ is larger in bytes than the Kotlin it supports.
+tools/*.py      linguist-language=Python linguist-detectable=true
+docs/*.md       linguist-documentation

@@ -89,18 +89,13 @@ say "preflight"
 
 cd "$(dirname "$0")/.." || die "cannot find the repo root"
 
-# gradlew and apksigner.bat both shell out to java and neither reads
-# gradle.properties for it, so an unset JAVA_HOME fails here with a message
-# about PATH that says nothing about this project. MSYS converts the POSIX form
-# on the way out to the .bat, so one value serves both.
-if [ -z "${JAVA_HOME:-}" ]; then
-    jh=$(sed -n 's/^org\.gradle\.java\.home=//p' app-launcher/gradle.properties | tr -d '\r')
-    [ -n "$jh" ] || die "JAVA_HOME unset and gradle.properties has no org.gradle.java.home"
-    JAVA_HOME=$(cygpath -u "$jh" 2>/dev/null || printf '%s' "$jh")
-    export JAVA_HOME
-    ok "JAVA_HOME <- gradle.properties"
-fi
-[ -x "$JAVA_HOME/bin/java" ] || [ -x "$JAVA_HOME/bin/java.exe" ] || die "no java under $JAVA_HOME"
+# gradlew and apksigner.bat both shell out to java and neither finds it on its
+# own here, so an unset JAVA_HOME fails with a message about PATH that says
+# nothing about this project. MSYS converts the POSIX form on the way out to the
+# .bat, so one value serves both.
+# shellcheck source=tools/jdk.sh
+. "$(dirname "$0")/jdk.sh" || exit 1
+ok "JAVA_HOME = $JAVA_HOME"
 
 for t in openssl curl sha256sum unzip git "$PY"; do
     command -v "$t" >/dev/null 2>&1 || die "missing tool: $t"
@@ -108,6 +103,7 @@ done
 command -v gh >/dev/null 2>&1 || die "missing tool: gh (GitHub CLI)"
 [ -f "$AAPT2" ]     || die "no aapt2 at $AAPT2"
 [ -f "$APKSIGNER" ] || die "no apksigner at $APKSIGNER"
+[ -r "$(dirname "$0")/jdk.sh" ] || die "missing tools/jdk.sh"
 ok "tools"
 
 [ -r "$OTA_KEY" ] || die "no OTA signing key at $OTA_KEY — run tools/ota-keygen.sh"

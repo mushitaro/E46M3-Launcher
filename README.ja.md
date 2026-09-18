@@ -241,12 +241,23 @@ adb uninstall app.tsunagi.e46m3.launcher
 
 自分で更新を配信したい、自分の署名鍵を使いたい、改造したい場合はこちら。
 
-**必要なもの:** JDK 17、Android SDK（build-tools 35.0.0）。Gradle 8.9 と AGP 8.7.3 は wrapper に含まれます。
+**必要なもの:** **JDK 17**、Android SDK（build-tools 35.0.0）。Gradle 8.9 と AGP 8.7.3 は wrapper に含まれます。
 
 ```bash
 git clone https://github.com/mushitaro/E46M3-Launcher
 cd E46M3-Launcher/app-launcher
+export JAVA_HOME=/path/to/jdk-17      # または下記
+./gradlew assembleRelease
 ```
+
+`gradle.properties` には意図的に `org.gradle.java.home` を**書いていません**。共有ファイルに絶対パスを書くと、その 1 台でしか動かず、クローンした全員がビルドに失敗します。毎回 `JAVA_HOME` を書きたくなければ、マシン単位で固定してください。
+
+```bash
+mkdir -p ~/.gradle
+echo 'org.gradle.java.home=/path/to/jdk-17' >> ~/.gradle/gradle.properties
+```
+
+`tools/` のスクリプトはどちらも不要です。`tools/jdk.sh` が `JAVA_HOME` → `~/.gradle/gradle.properties` → `PATH` → Android Studio の定位置の順で JDK 17 を探し、見つからなければ何をすればよいかを出します。
 
 ### 1. 自分の署名鍵
 
@@ -348,6 +359,21 @@ Digital Asset Links の検証に失敗しています。原因はどれも無言
 | [`05-tuner-resume-spec.md`](docs/05-tuner-resume-spec.md) | 電源断からの Web ツール復帰 |
 | [`06-tuner-webgl-fallback-spec.md`](docs/06-tuner-webgl-fallback-spec.md) | このユニットに WebGL が無いことへの対処 |
 | [`07-ota-design.md`](docs/07-ota-design.md) | 更新機構: 脅威モデル、公開時のゲート、未検証事項 |
+
+`02` は存在しません。リポジトリ内のどこからも参照されていません。
+
+### ドキュメントが引用しているが、リポジトリに含まれないもの
+
+いくつかの文書は `device-extract/` 以下のファイル（ユニットのシステムプロパティ、bugreport、ベンダー APK 23 本、`/sdcard` の一部）を引用していますが、**そのディレクトリはコミットされていません**。約 126MB あり、`adb` のある実機から完全に再現でき、且つ所有者のストレージを含むからです。作り方はおおむねこうです。
+
+```bash
+adb shell getprop                     > device-extract/getprop_full.txt
+adb shell pm list packages -f         > device-extract/packages.txt
+adb bugreport                           device-extract/bugreport.zip
+adb pull /system/priv-app               device-extract/apks/
+```
+
+これらの引用は根拠の提示であって、手順ではありません。ビルドもテストもリリーススクリプトもこのディレクトリを読みません — クローンしただけでビルドもテストも通ります。
 
 ---
 

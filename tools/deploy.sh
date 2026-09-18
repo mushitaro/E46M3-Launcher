@@ -32,6 +32,12 @@ OUTDIR="${OUTDIR:-/tmp/e46m3-deploy}"
 # fails with a message that does not mention paths at all.
 adb() { MSYS_NO_PATHCONV=1 "$ADB" -s "$DEV" "$@"; }
 
+# Only needed if this script ends up building, but sourcing it costs nothing and
+# keeps the two scripts agreeing on where Java is. Failure is not fatal here:
+# deploying a previously built APK needs no JDK at all.
+# shellcheck source=tools/jdk.sh
+. "$(dirname "$0")/jdk.sh" 2>/dev/null || true
+
 say() { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 ok()  { printf '   \033[32mok\033[0m  %s\n' "$*"; }
 bad() { printf '   \033[31mNG\033[0m  %s\n' "$*"; }
