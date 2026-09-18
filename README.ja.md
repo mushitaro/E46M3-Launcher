@@ -33,18 +33,50 @@ BMW E46 M3 に載せた Android ヘッドユニット用の、ホーム画面置
 
 ## 対象機種
 
-開発と検証はこの機種で行いました。
+**箱のブランド名ではなく、ユニット自身が名乗る値で判定してください。**
+
+この種のユニットはホワイトレーベル品です。ODM が 1 社で作ったものを、多数の販売元が自社ブランドで売っています。開発に使った個体は日本で **ENEON** ブランドとして購入したものですが、**ファームウェアにはその名前が一切残っていません**。抽出した端末データ全体（システムプロパティ、`/sdcard`、ベンダー APK 23 本）を検索して 0 件でした。小売ブランドはシールの話で、端末が名乗るのは ODM の識別子です。照合すべきは後者です。
+
+判定はこのコマンドで。
+
+```bash
+adb shell getprop ro.product.model         # FF-5000
+adb shell getprop ro.product.brand         # FFKJ
+adb shell getprop ro.product.manufacturer  # alps     (MediaTek のリファレンス名)
+adb shell getprop ro.build.version.sdk     # 27       <- 本当の Android バージョン
+adb shell getprop ro.build.display.id      # FF_8227L_10
+adb shell wm size                          # Physical size: 1024x600
+```
+
+> **信じるべきは `ro.build.version.sdk` です。** このユニットは設定画面で「Android 10」と表示し、`ro.build.version.release` も `10` を返しますが、どちらもベンダーが文字列を書き換えただけの見た目です。実体は Android **8.1、API 27**。このプロジェクトはすべて 27 基準で考えています。
+
+### 検証済みの基準機
 
 | | |
 |---|---|
-| ユニット | **FF-5000**（`ro.product.model`）、ブランド FFKJ |
+| model / device / name | **`FF-5000`** |
+| ブランド | **`FFKJ`**（ODM。複数の小売ブランドで販売されており、日本では ENEON など） |
+| 製造元 | `alps`（MediaTek リファレンス） |
+| ビルド ID | `FF_8227L_10` |
+| fingerprint | `alps/full_8227L_demo/8227L_demo:8.1.0/O11019/1571038753:userdebug/test-keys` |
+| HMI 版数 | `XRCH.D.Q.F.3.04_1.2019.11.29.16.00` — ベンダー UI のクラッシュログ由来。`getprop` では読めません |
 | SoC | MediaTek **MT8227L** / AutoChips AC8227L、Cortex-A7 ×4、**32bit のみ**（`armeabi-v7a`） |
-| Android | **8.1 Oreo、API 27** — 設定画面は「Android 10」と表示しますが見た目だけで、`ro.build.version.sdk` は 27 です |
+| Android | **8.1 Oreo、API 27** |
 | 画面 | **1024 × 600**、240dpi |
 | RAM | 2GB（空き約 1.1GB） |
-| ビルド | `userdebug` / `test-keys`。ネットワーク ADB がポート 5555 で既定で開いています |
+| ビルド型 | `userdebug` / `test-keys`。ネットワーク ADB がポート 5555 で既定で開いています |
+| ベンダー UI | `com.ts.MainUI`（MTK カーオーディオの「TS」系ファームウェア） |
 
-`minSdk` は 21、`targetSdk` は 27 です。API 23 未満では更新機能は動作しません。
+### あなたのユニットはどこまで近いか
+
+| ユニット | 期待できること |
+|---|---|
+| `FF-5000` / `FFKJ`、API 27、1024×600 | **基準機。** ここに書いてあることがそのまま当てはまります |
+| 他の MTK **8227L** 機で `com.ts.MainUI` あり、API 27、**1024×600** | ほぼ問題ないはずです。コンソールもアプリ一覧も更新も車両系キーも、このファミリが共有するものに乗っています |
+| 同じ系統だが**解像度が違う**（800×480、1280×720 など） | **コンソールの配置が崩れます。** 座標は意図的に **px** 直打ちで（理由は `res/values/design.xml`）、密度スケーリングもありません。動きはしますが、見た目は成立しません |
+| API 23〜26 | インストールも起動も更新もできます。ただし `targetSdk 27` なので、未テストの互換シムがフレームワーク側でかかります |
+| **API 23 未満** | 更新機能がそもそも動きません。captive portal と生きている回線を区別するのに `NetworkCapabilities` が必要だからです。`minSdk` は 21 なので、それ以外は入ります |
+| 8227L でない / `com.ts.MainUI` が無い | ホーム画面・時計・アプリ一覧・更新は動きます。RADIO / BT / VIDEO / EQ / CARPLAY / DROID と外気温は死にます |
 
 ### この機種に依存している部分
 

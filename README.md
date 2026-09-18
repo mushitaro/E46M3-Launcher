@@ -45,21 +45,60 @@ Two specific risks, stated up front:
 
 ---
 
-## Target device
+## Which head units this runs on
 
-Developed and verified on:
+**Check the unit, not the brand on the box.**
+
+These are white-label units: one ODM builds the hardware and many sellers
+rebrand it. The unit this was developed on was bought in Japan under the
+**ENEON** brand — but nothing in the firmware says so, and searching the whole
+device dump (system properties, `/sdcard`, all 23 vendor APKs) finds no trace of
+that name. The retail brand is a sticker. What the device reports about itself
+is the ODM identity, and that is the thing worth matching.
+
+So identify yours this way:
+
+```bash
+adb shell getprop ro.product.model         # FF-5000
+adb shell getprop ro.product.brand         # FFKJ
+adb shell getprop ro.product.manufacturer  # alps     (MediaTek's reference name)
+adb shell getprop ro.build.version.sdk     # 27       <- the real Android version
+adb shell getprop ro.build.display.id      # FF_8227L_10
+adb shell wm size                          # Physical size: 1024x600
+```
+
+> **`ro.build.version.sdk` is the one to trust.** On this unit the Settings app
+> reports "Android 10" and `ro.build.version.release` says `10`, both of which
+> are cosmetic — the vendor edited the strings. It is Android **8.1, API 27**.
+> Everything in this project is reasoned at 27.
+
+### Verified reference unit
 
 | | |
 |---|---|
-| Unit | **FF-5000** (`ro.product.model`), brand FFKJ |
+| Model / device / name | **`FF-5000`** |
+| Brand | **`FFKJ`** (the ODM — sold under various retail brands, e.g. ENEON in Japan) |
+| Manufacturer | `alps` (MediaTek reference) |
+| Build ID | `FF_8227L_10` |
+| Fingerprint | `alps/full_8227L_demo/8227L_demo:8.1.0/O11019/1571038753:userdebug/test-keys` |
+| HMI version | `XRCH.D.Q.F.3.04_1.2019.11.29.16.00` — from the vendor UI crash log, **not** readable with `getprop` |
 | SoC | MediaTek **MT8227L** / AutoChips AC8227L, 4× Cortex-A7, **32-bit only** (`armeabi-v7a`) |
-| Android | **8.1 Oreo, API 27** — the Settings app displays "Android 10", which is cosmetic. `ro.build.version.sdk` is 27 |
+| Android | **8.1 Oreo, API 27** |
 | Screen | **1024 × 600**, 240 dpi |
 | RAM | 2 GB (~1.1 GB free) |
-| Build | `userdebug` / `test-keys`; network ADB on by default at port 5555 |
+| Build type | `userdebug` / `test-keys`; network ADB on by default at port 5555 |
+| Vendor UI | `com.ts.MainUI` (the "TS" family of MTK head-unit firmware) |
 
-`minSdk` is 21 and `targetSdk` is 27. Nothing below API 23 will run the update
-subsystem.
+### How close is yours?
+
+| Your unit | What to expect |
+|---|---|
+| `FF-5000` / `FFKJ`, API 27, 1024×600 | **The reference.** Everything described here applies |
+| Another MTK **8227L** unit with `com.ts.MainUI`, API 27, **1024×600** | Very likely fine. The console, the app list, the updates and the vehicle keys all key off things this family shares |
+| Same family but a **different resolution** (800×480, 1280×720…) | **The console will be laid out wrong.** Positions are in **px** on purpose — see `res/values/design.xml` for why — and there is no density scaling. It runs; it does not look right |
+| API 23–26 | Installs and runs, updates work. `targetSdk 27` means the framework will apply compatibility shims that were never tested |
+| **Below API 23** | The update subsystem does not run at all — it needs `NetworkCapabilities` to tell a captive portal from a working link. `minSdk` is 21, so the rest still installs |
+| Not an 8227L / no `com.ts.MainUI` | A working home screen, clock, app list and updates. RADIO / BT / VIDEO / EQ / CARPLAY / DROID and the outside temperature will be dead |
 
 ### What depends on this exact hardware
 
