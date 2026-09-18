@@ -119,6 +119,14 @@ class TargetLauncher(
     }
 
     /**
+     * Set for the duration of one [launch] call. A field rather than a
+     * parameter because [intentFor] is also the pre-flight resolver, and giving
+     * every caller of that an argument it does not care about would spread this
+     * one special case across the whole file.
+     */
+    private var resume = false
+
+    /**
      * One of our web tools, pinned to Chrome.
      *
      * Chrome is named rather than left to the default handler because the
@@ -144,7 +152,11 @@ class TargetLauncher(
      */
     private fun webIntent(url: String): Intent? {
         val chrome = chromePackage() ?: return null
-        val uri = Uri.parse(url)
+        val uri = if (resume) {
+            Uri.parse(url).buildUpon().appendQueryParameter("resume", "1").build()
+        } else {
+            Uri.parse(url)
+        }
         val colours = CustomTabColorSchemeParams.Builder()
             .setToolbarColor(Color.BLACK)
             .setNavigationBarColor(Color.BLACK)
@@ -200,8 +212,26 @@ class TargetLauncher(
     fun isAvailable(target: LaunchTarget): Boolean =
         target.isInternal || target.steps.any { resolves(it) }
 
-    fun launch(target: LaunchTarget): LaunchOutcome {
+    /**
+     * @param resume marks a web target as being reopened after the unit
+     *   restarted under it, rather than opened by a press. It reaches the page
+     *   as `?resume=1` — see docs/05-tuner-resume-spec.md for what the tool does
+     *   with it. Ignored by every other kind of step, which have no such notion.
+     */
+    fun launch(target: LaunchTarget, resume: Boolean = false): LaunchOutcome {
         if (target.isInternal) return LaunchOutcome.Internal
+        this.resume = resume
+        // Cleared however this returns. The flag belongs to one call, and
+        // [resolves] shares the same intent builder — leaving it set would mean
+        // the pre-flight check quietly asking about a URL nobody requested.
+        try {
+            return attempt(target)
+        } finally {
+            this.resume = false
+        }
+    }
+
+    private fun attempt(target: LaunchTarget): LaunchOutcome {
 
         // Try the previously winning step first; it is almost always right, and
         // it avoids re-paying a SecurityException on every single press.
@@ -220,6 +250,11 @@ class TargetLauncher(
                 continue
             }
             try {
+                // ActivityManager truncates the URI in its own START line, so
+                // the only way to see whether `?resume=1` actually went out is
+                // to say so here. One line per press, and it is the check the
+                // resume path is verified with on the car.
+                if (step is Step.Web) Log.i(TAG, "opening ${intent.data}")
                 context.startActivity(intent)
                 prefs.edit().putInt(keyWinner(target), i).apply()
                 record(target, i, "OK")

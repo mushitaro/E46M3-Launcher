@@ -146,4 +146,34 @@
         android:inflatedId="@+id/app_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <!-- Inflated on the first tap of the display window, never before. Same
+         reasoning as the app list above: this screen's cold start is paid on
+         every boot, every KILL_APPS and every low-memory kill, and an overlay
+         nobody has asked for yet should cost nothing. -->
+    <ViewStub
+        android:id="@+id/ota_stub"
+        android:layout="@layout/ota_pane"
+        android:inflatedId="@+id/ota_pane"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Reached only by a long press on the update pane's provenance line.
+         Inflated then, which on almost every unit is never. -->
+    <ViewStub
+        android:id="@+id/remove_stub"
+        android:layout="@layout/remove_pane"
+        android:inflatedId="@+id/remove_pane"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Last, so it covers everything: the launcher has stopped being HOME and
+         the only thing that matters is the recovery command. Inflated only in
+         that case, which on a healthy unit is never. -->
+    <ViewStub
+        android:id="@+id/lost_home_stub"
+        android:layout="@layout/lost_home"
+        android:inflatedId="@+id/lost_home"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 </FrameLayout>

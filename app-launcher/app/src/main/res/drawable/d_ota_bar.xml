@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The download bar's recess. The fill on top of it is the console's single
+     accent, and the two together are the only moving thing this pane has.
+
+     Not a ProgressBar: that widget drags in the platform's own theming, which
+     this app deliberately does not use (no AppCompat, no Material), and it
+     would arrive with an indeterminate animation nobody asked for. A shape and
+     a scaleX are the whole requirement. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/d_al_badge_bg" />
+    <corners android:radius="2px" />
+</shape>

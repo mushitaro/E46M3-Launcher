@@ -5,6 +5,13 @@
 keystore.properties
 local.properties
 
+# The OTA manifest signing key also lives outside this repo (~/.e46m3/). These
+# match the private half only: tools/ota_public_key.pem and the res/raw DER copy
+# of it MUST be committed, or no car can verify anything.
+*-private.pem
+*private-key*.pem
+ota.properties
+
 # ── Gradle / Android build output ─────────────────────────────────────────
 .gradle/
 build/

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The one screen in this app that is allowed to be ugly.
+
+  It appears when the launcher has just been replaced and is no longer the
+  preferred HOME activity. That state is recoverable, but only over ADB, and
+  only while the car is powered and on the right WiFi (docs/04 §12) — so the
+  single job of this layout is to carry a command from a dashboard to a
+  keyboard without a transcription error.
+
+  Hence: opaque rather than transparent, because it must not be mistaken for a
+  notice laid over a working console; monospace for the command, because
+  `cmd package set-home-activity` read off a condensed proportional face is how
+  an `l` becomes a `1`; selectable, because the owner may be running a terminal
+  app on this very unit.
+
+  It is not dismissible. There is no close control anywhere in this file, and
+  the root swallows touches so nothing behind it can be reached. The console
+  underneath still works in the sense that its keys are laid out, but a unit
+  that has lost HOME is one power cycle away from FallbackHome, and hiding that
+  to keep the screen tidy would be the wrong trade.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/lost_home"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/d_screen"
+    android:clickable="true"
+    android:focusable="true"
+    android:paddingStart="@dimen/d_al_pad_h"
+    android:paddingEnd="@dimen/d_al_pad_h"
+    android:paddingTop="@dimen/d_ota_body_pad_top"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/ota_lost_home_title"
+        android:textColor="@color/d_tach_red"
+        android:textSize="@dimen/d_ota_headline_size"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-condensed"
+        android:letterSpacing="0.06"
+        android:includeFontPadding="false" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/d_ota_row_gap"
+        android:text="@string/ota_lost_home_body"
+        android:textColor="@color/d_al_badge_fg"
+        android:textSize="@dimen/d_ota_detail_size"
+        android:fontFamily="sans-serif-condensed"
+        android:includeFontPadding="false" />
+
+    <!-- Monospace and selectable. This is the payload of the whole screen. -->
+    <TextView
+        android:id="@+id/lost_home_command"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/d_ota_row_gap"
+        android:background="@drawable/d_ota_bar"
+        android:padding="@dimen/d_al_gap"
+        android:textColor="@color/d_lit"
+        android:textSize="@dimen/d_ota_detail_size"
+        android:fontFamily="monospace"
+        android:textIsSelectable="true"
+        android:includeFontPadding="false" />
+
+    <!-- A second route, for when there is no laptop in the garage. It opens the
+         system's own home-app picker, where com.android.launcher can be chosen
+         and this app put back afterwards. `[U]` on MtkSettings, so the command
+         above stays the one that is guaranteed to work. -->
+    <TextView
+        android:id="@+id/lost_home_settings"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/d_ota_action_h"
+        android:layout_marginTop="@dimen/d_ota_action_gap"
+        android:minWidth="@dimen/d_ota_action_min_w"
+        android:paddingStart="@dimen/d_ota_action_pad"
+        android:paddingEnd="@dimen/d_ota_action_pad"
+        android:background="@drawable/d_ota_btn"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:text="@string/ota_action_home_settings"
+        android:textColor="@color/d_al_title"
+        android:textSize="@dimen/d_ota_action_size"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-condensed"
+        android:letterSpacing="0.18"
+        android:includeFontPadding="false" />
+</LinearLayout>

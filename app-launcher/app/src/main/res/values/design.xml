@@ -227,4 +227,34 @@
     <color name="d_al_close_bg">#0FFFFFFF</color>     <!-- rgba(255,255,255,.06) -->
     <color name="d_al_close_bg_pressed">#21FFFFFF</color> <!-- rgba(255,255,255,.13) -->
     <color name="d_al_close_fg">#D9E8E5DF</color>     <!-- rgba(232,229,223,.85) -->
+
+    <!-- ── Update pane ─────────────────────────────────────────────────────
+         Shaped like the app list on purpose: same header height, same side
+         padding, same divider, same close control. It is the second full-window
+         overlay this console has, and two overlays that differ only in content
+         should not also differ in chrome.
+
+         No new colours. The palette below is entirely d_al_* and d_lit, because
+         a pane that reports a version number has nothing to say that the
+         existing tones cannot carry — and because the one thing here that IS
+         new, an update being available, deserves the console's single accent
+         rather than a colour of its own. -->
+    <dimen name="d_ota_body_pad_top">28px</dimen>
+    <dimen name="d_ota_row_gap">12px</dimen>
+    <dimen name="d_ota_headline_size">30px</dimen>
+    <dimen name="d_ota_detail_size">16px</dimen>
+    <dimen name="d_ota_note_size">15px</dimen>
+    <dimen name="d_ota_foot_size">13px</dimen>
+
+    <dimen name="d_ota_btn_w">92px</dimen>
+    <dimen name="d_ota_btn_h">34px</dimen>
+    <dimen name="d_ota_btn_size">14px</dimen>
+    <dimen name="d_ota_btn_gap">12px</dimen>
+
+    <dimen name="d_ota_bar_h">6px</dimen>
+    <dimen name="d_ota_action_h">46px</dimen>
+    <dimen name="d_ota_action_min_w">180px</dimen>
+    <dimen name="d_ota_action_pad">26px</dimen>
+    <dimen name="d_ota_action_size">19px</dimen>
+    <dimen name="d_ota_action_gap">22px</dimen>
 </resources>

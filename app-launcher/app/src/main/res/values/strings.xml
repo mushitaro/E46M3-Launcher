@@ -68,4 +68,121 @@
          Japanese in this UI actually lives. -->
     <string name="applist_title" translatable="false">APPS</string>
     <string name="applist_close" translatable="false">ホームへ戻る</string>
+
+    <!-- ── Update ───────────────────────────────────────────────────────────
+         Two registers, and the split is the same one the rest of this file
+         uses. Anything that can reach the 5x7 LCD is uppercase Latin, because
+         Font57 has no lowercase at all and its "." is one column wide — see
+         ui/Font57.kt, which tools/gen_font57.py generates. Anything that only
+         ever appears in the pane is prose, and prose is Japanese.
+
+         The LCD notice is measured, not estimated: at the source line's
+         dot=2/gap=1 (pitch 3), "UPDATE 0.2.0" is 171px. The LCD content box is
+         440 - 2*18 = 404px and the date line already holds ~132px of it from
+         the left, leaving ~272px. Adding "READY" would make it ~281px and it
+         would collide. So it is not added. -->
+    <string name="ota_title" translatable="false">UPDATE</string>
+    <string name="ota_check" translatable="false">CHECK</string>
+
+    <!-- LCD notice. Format arg is the available versionName. -->
+    <string name="ota_lcd_available" translatable="false">UPDATE %1$s</string>
+
+    <!-- Pane headlines. Switch markings, so uppercase Latin like the keys. -->
+    <string name="ota_headline_idle" translatable="false">NOT CHECKED</string>
+    <string name="ota_headline_checking" translatable="false">CHECKING</string>
+    <string name="ota_headline_up_to_date" translatable="false">UP TO DATE</string>
+    <string name="ota_headline_available" translatable="false">%1$s → %2$s</string>
+    <string name="ota_headline_clock" translatable="false">CLOCK WRONG</string>
+    <string name="ota_headline_offline" translatable="false">NO NETWORK</string>
+    <string name="ota_headline_unvalidated" translatable="false">NETWORK UNCONFIRMED</string>
+    <string name="ota_headline_failed" translatable="false">CHECK FAILED</string>
+    <string name="ota_headline_downloading" translatable="false">DOWNLOADING</string>
+
+    <!-- Switch markings, so uppercase Latin like every other control here. -->
+    <string name="ota_action_download" translatable="false">DOWNLOAD</string>
+    <string name="ota_action_install" translatable="false">INSTALL</string>
+    <string name="ota_action_settings" translatable="false">SETTINGS</string>
+    <string name="ota_action_home_settings" translatable="false">HOME SETTINGS</string>
+    <!-- %1$d is the versionCode being restored. -->
+    <string name="ota_action_rollback" translatable="false">ROLLBACK %1$d</string>
+    <string name="ota_headline_rolling_back" translatable="false">ROLLING BACK</string>
+    <string name="ota_detail_rolling_back">保存してある前の版に戻しています。適用後、ランチャーは自動で再起動します。</string>
+
+    <!-- ── Removal ──────────────────────────────────────────────────────────
+         The only screen in this app that can leave the unit without a home
+         screen. Reached by a long press on the update pane's provenance line —
+         deliberately not discoverable, in the same spirit as the launch-matrix
+         dump on the display window. -->
+    <string name="remove_title" translatable="false">REMOVE LAUNCHER</string>
+    <string name="remove_warning">このランチャーを削除するには、先に HOME を元のランチャーへ返す必要があります。HOME が無い状態で削除すると、ヘッドユニットは FallbackHome に落ち、復旧には車両の電源と ADB が必要になります。下のコマンドを手元に用意してから進めてください。</string>
+
+    <string name="remove_step_clear">HOME の割り当てを解除する</string>
+    <string name="remove_step_pick">元のランチャーを「常時」で選ぶ</string>
+    <string name="remove_step_verify">HOME が移ったことを確認する</string>
+    <string name="remove_step_uninstall">このアプリを削除する</string>
+
+    <string name="remove_action_clear" translatable="false">CLEAR HOME</string>
+    <string name="remove_action_pick" translatable="false">CHOOSE LAUNCHER</string>
+    <string name="remove_action_verify" translatable="false">VERIFY</string>
+    <string name="remove_action_uninstall" translatable="false">UNINSTALL</string>
+    <string name="remove_action_retry" translatable="false">RETRY</string>
+    <string name="remove_action_done" translatable="false">DONE</string>
+
+    <string name="remove_pick_hint">開いた画面で「ランチャー」(com.android.launcher) を選び、「常時」をタップしてください。戻ったら VERIFY を押します。</string>
+    <string name="remove_verify_failed">まだ HOME がこのアプリのままです。元のランチャーを「常時」で選び直してから、もう一度 VERIFY を押してください。</string>
+    <string name="remove_no_oem">元のランチャー (com.android.launcher) が見つかりません。この端末では安全に削除できないため、ADB から操作してください。</string>
+    <string name="remove_cleared">HOME の割り当てを解除しました。次にランチャーを選びます。</string>
+    <string name="remove_handed">HOME が元のランチャーに移りました。削除できます。</string>
+    <string name="ota_headline_installing" translatable="false">INSTALLING</string>
+    <string name="ota_headline_blocked" translatable="false">NOT NOW</string>
+    <string name="ota_headline_updated" translatable="false">UPDATED %1$s</string>
+
+    <!-- Pane detail lines. Prose, so Japanese. Each one has to leave the owner
+         knowing whether to do something or to do nothing. -->
+    <string name="ota_detail_idle">この起動ではまだ確認していません。</string>
+    <string name="ota_detail_checking">確認しています…</string>
+    <string name="ota_detail_up_to_date">公開されている最新版が入っています。</string>
+    <string name="ota_detail_clock">車両の時計がずれているため、接続を試みていません。時刻が同期されたら自動で再開します。</string>
+    <string name="ota_detail_offline">インターネットに接続されていません。</string>
+    <string name="ota_detail_unvalidated">接続はありますが到達性が確認できていません。次回また試します。</string>
+    <!-- %1$s download size, %2$s the signing certificate, abbreviated. -->
+    <string name="ota_detail_available">%1$s · 署名 %2$s</string>
+    <!-- %1$s bytes so far, %2$s total. -->
+    <string name="ota_detail_downloading">%1$s / %2$s</string>
+    <!-- %1$s download size, %2$s the signing certificate, abbreviated. -->
+    <string name="ota_detail_ready">%1$s · 署名 %2$s · 検証済み</string>
+    <string name="ota_detail_metered">従量制の接続です。通信量が発生するため、ダウンロードは手動で開始してください。</string>
+    <string name="ota_detail_installing">システムの確認画面に進みます。適用後、ランチャーは自動で再起動します。</string>
+    <string name="ota_detail_updated">更新が完了しました。</string>
+
+    <!-- Why a self-update is being refused right now. Each one names the thing
+         that would be interrupted, because "できません" tells nobody anything. -->
+    <string name="ota_block_not_resumed">ホーム画面が前面にないため保留しています。</string>
+    <string name="ota_block_m_console">M コンソール表示中です。閉じてから実行してください。</string>
+    <string name="ota_block_resume_armed">前回のツールを復帰中です。少し待ってから実行してください。</string>
+    <string name="ota_block_app_list">アプリ一覧を閉じてから実行してください。</string>
+    <string name="ota_block_cable">診断ケーブルが接続されています。抜いてから実行してください。</string>
+    <string name="ota_block_ds2_live">DME と通信中です。終了してから実行してください。</string>
+    <string name="ota_block_engine_running">エンジン始動中は更新しません。停止してから実行してください。</string>
+
+    <!-- The app-op that has not been granted yet. The ADB line is the reliable
+         route; the Settings shortcut may not resolve on this vendor build. -->
+    <string name="ota_block_appop">インストール権限が許可されていません。設定 → アプリ → 提供元不明のアプリ で許可するか、ADB から appops set REQUEST_INSTALL_PACKAGES allow を実行してください。</string>
+    <string name="ota_block_poisoned">この版は 2 回続けて適用に失敗しています。安全のため提示しません。</string>
+
+    <!-- Lost-HOME recovery. This is the one message on the unit that has to be
+         readable by somebody who is about to type it into a terminal, so the
+         title is prose and the body is the command, verbatim. -->
+    <string name="ota_channel_name">ランチャー更新</string>
+    <string name="ota_channel_desc">ホーム画面の復旧が必要なときだけ通知します</string>
+    <string name="ota_lost_home_title">ホーム画面の設定が失われました</string>
+    <string name="ota_lost_home_body">次のコマンドで戻してください:</string>
+    <!-- %1$s is a short token from the log, not prose — it is there so a failure
+         can be searched for, not so it can be read aloud. -->
+    <string name="ota_detail_failed">%1$s</string>
+
+    <!-- %1$s versionName, %2$s short commit, %3$s when it was last checked. -->
+    <string name="ota_footer" translatable="false">%1$s  g%2$s  ·  %3$s</string>
+    <string name="ota_checked_never" translatable="false">NOT CHECKED THIS BOOT</string>
+    <string name="ota_checked_ago" translatable="false">CHECKED %1$s AGO</string>
 </resources>

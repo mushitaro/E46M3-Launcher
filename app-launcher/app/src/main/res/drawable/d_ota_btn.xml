@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The update pane's text buttons. d_al_close's fill and radius at a wider
+     size, so the pane's controls and the app list's close control read as the
+     same family of switch rather than as two different ones.
+
+     A disabled state is deliberately absent: this console does not show a
+     control that cannot act (see design.xml's note on the removed DEAD key
+     face). When a button would be disabled it is removed, and the reason takes
+     its place. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/d_al_close_bg_pressed" />
+            <corners android:radius="@dimen/d_al_close_r" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/d_al_close_bg" />
+            <corners android:radius="@dimen/d_al_close_r" />
+        </shape>
+    </item>
+</selector>

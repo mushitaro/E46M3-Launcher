@@ -10,6 +10,22 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
+    <!-- OTA. REQUEST_INSTALL_PACKAGES is declared here but is backed by an
+         app-op that starts un-granted on API 26+, so ConfirmInstaller reports
+         itself unavailable until it is allowed once:
+
+           adb shell appops set app.tsunagi.e46m3.launcher REQUEST_INSTALL_PACKAGES allow
+
+         or Settings -> Apps -> Special access -> Install unknown apps.
+
+         REQUEST_DELETE_PACKAGES is the same shape: a normal permission that
+         only lets the app ASK, with the system showing its own confirmation. It
+         is here for the removal flow, which first hands HOME back to
+         com.android.launcher and refuses to go on until the platform confirms
+         it did. See ota/Relinquish.kt. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+
     <!-- The screen between the boot animation and this launcher is
          com.android.settings/.FallbackHome, whose theme sets
          windowShowWallpaper=true — so the system wallpaper is what fills it.
@@ -96,5 +112,24 @@
                 android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
                 android:resource="@xml/usb_device_filter" />
         </activity>
+
+        <!-- The app's only manifest-registered receiver, and it has to be one:
+             the moment worth observing is the one just after this process was
+             killed and recreated by a package replace, when no runtime
+             registration exists. It asks whether the unit still has a home
+             screen and, if not, puts the recovery command somewhere that
+             outlives this screen not being visible.
+
+             MY_PACKAGE_REPLACED is on API 26's implicit-broadcast exception
+             list, so the O background limits do not suppress it. Only the
+             system sends it and it is delivered only to the package it names,
+             so exported="true" costs nothing here. -->
+        <receiver
+            android:name=".ota.OtaReplacedReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

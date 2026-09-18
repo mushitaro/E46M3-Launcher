@@ -10,24 +10,39 @@ import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
+import android.provider.Settings
 import android.util.Log
 import android.view.View
 import android.view.ViewStub
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import app.tsunagi.e46m3.launcher.apps.AppCatalog
 import app.tsunagi.e46m3.launcher.apps.AppEntry
 import app.tsunagi.e46m3.launcher.launch.LaunchOutcome
 import app.tsunagi.e46m3.launcher.launch.LaunchTarget
+import app.tsunagi.e46m3.launcher.launch.ResumeAfterRestart
+import app.tsunagi.e46m3.launcher.launch.Step
 import app.tsunagi.e46m3.launcher.launch.TargetLauncher
 import app.tsunagi.e46m3.launcher.launch.Targets
+import app.tsunagi.e46m3.launcher.ota.ConsoleState
+import app.tsunagi.e46m3.launcher.ota.HomeGuard
+import app.tsunagi.e46m3.launcher.ota.Relinquish
+import app.tsunagi.e46m3.launcher.ota.Ota
+import app.tsunagi.e46m3.launcher.ota.OtaController
+import app.tsunagi.e46m3.launcher.ota.OtaSnapshot
+import app.tsunagi.e46m3.launcher.ota.OtaState
+import app.tsunagi.e46m3.launcher.ota.OtaStatus
 import app.tsunagi.e46m3.launcher.ui.AppListLayer
 import app.tsunagi.e46m3.launcher.ui.BootWallpaper
 import app.tsunagi.e46m3.launcher.ui.ConsoleKeys
 import app.tsunagi.e46m3.launcher.ui.DotMatrixView
 import app.tsunagi.e46m3.launcher.ui.ModeSwitch
+import app.tsunagi.e46m3.launcher.ui.OtaLayer
+import app.tsunagi.e46m3.launcher.ui.RemoveLayer
 import app.tsunagi.e46m3.launcher.ui.TachView
 import app.tsunagi.e46m3.launcher.ui.WindowFrameView
 import app.tsunagi.e46m3.launcher.vehicle.UsbBus
@@ -141,6 +156,72 @@ class HomeActivity : Activity() {
     private var notice: String? = null
     private val clearNotice = Runnable { notice = null; renderSourceLine() }
 
+    /** See [ResumeAfterRestart] and [armResume]. */
+    private lateinit var resumeAfterRestart: ResumeAfterRestart
+    private var resumeTarget: String? = null
+    private var resumeTicks = 0
+
+    /**
+     * When the DME last answered, on the monotonic clock.
+     *
+     * Only the self-update guard reads it. elapsedRealtime rather than the wall
+     * clock for the usual reason on this unit: the RTC cannot be trusted, and
+     * "was this within the last minute" must not become "was this before 2006".
+     */
+    private var lastEngineSampleAt: Long = 0L
+
+    /** Finds published updates and verifies them. See [app.tsunagi.e46m3.launcher.ota.Ota]. */
+    private lateinit var ota: OtaController
+
+    /**
+     * The delayed update check, held as a named Runnable so it can be taken
+     * back.
+     *
+     * An anonymous lambda posted to [ui] survives onDestroy, and by then both
+     * OTA executors have been shut down — so it would land on a
+     * RejectedExecutionException, on the main thread, in the app that IS the
+     * home screen. The crash handler here deliberately lets the process die,
+     * which is the right call for a corrupted UI state and the wrong outcome
+     * entirely for a missed update check.
+     */
+    private val otaCheck = Runnable { ota.checkIfDue() }
+
+    /** Inflated only if this launcher ever stops being HOME. See [showLostHome]. */
+    private var lostHome: View? = null
+
+    /** The removal procedure. Inflated only if somebody long-presses for it. */
+    private var removeLayer: RemoveLayer? = null
+    private var removeState = RemoveLayer.State(done = 0)
+    private var otaLayer: OtaLayer? = null
+
+    /**
+     * The OTA download's own thread, created only if a download ever starts.
+     *
+     * Deliberately not [io]. A three-megabyte transfer sitting in front of a
+     * catalogue reload triggered by [packageReceiver] is a visible bug — the app
+     * list would simply stop updating for the length of a download — and the two
+     * jobs have nothing to say to each other. Minimum priority for the same
+     * reason [io] is: neither may compete with the screen.
+     */
+    private val otaIo: ExecutorService by lazy {
+        Executors.newSingleThreadExecutor { r ->
+            Thread(r, "ota").apply { priority = Thread.MIN_PRIORITY }
+        }
+    }
+
+    /**
+     * The sticky half of the LCD source line: set while a verified update is
+     * waiting, cleared when there is none.
+     *
+     * It outranks [activeSource], and that is a deliberate trade. The slot's
+     * original job is to name the last thing launched from this console, which
+     * is pleasant but not actionable; an update that is downloaded, verified and
+     * waiting IS actionable, and the LCD is the one-tap way to reach it. A
+     * transient [notice] still wins over both, so pressing a key still reports
+     * what it did, and the update line returns a couple of seconds later.
+     */
+    private var otaNotice: String? = null
+
     /**
      * Outside air, from the head unit's own CAN service. Null on this car — see
      * docs §6.1.6 — and kept only because the code should not assume that.
@@ -175,6 +256,13 @@ class HomeActivity : Activity() {
         override fun onReceive(context: Context?, intent: Intent?) {
             renderClock()
             refreshNightMode()
+            // ACTION_TIME_CHANGED is what AlarmManagerService broadcasts after
+            // an NTP sync, and on this unit that is usually the moment an RTC
+            // reading 2006 becomes usable. A check parked for exactly that
+            // reason restarts here — no second receiver, no polling.
+            if (::ota.isInitialized && intent?.action == Intent.ACTION_TIME_CHANGED) {
+                ota.onTimeChanged()
+            }
         }
     }
 
@@ -216,6 +304,87 @@ class HomeActivity : Activity() {
         renderClock()
         renderTemp()
         renderSourceLine()
+
+        // Read before anything else can clear it — onStart, moments from now,
+        // forgets unconditionally.
+        resumeAfterRestart = ResumeAfterRestart(this)
+        armResume(resumeAfterRestart.consume())
+
+        // Constructed here, but it touches neither storage nor the network
+        // until something asks it to, and everything it does is on a worker.
+        ota = OtaController(this, io, ui, otaIo, ::onOtaChanged)
+
+        // Whether the last self-update worked can only be observed here: the
+        // install killed the process that started it. Consumed before it is
+        // acted on, so a version that crashes on first run cannot loop.
+        ota.consumeStartupOutcome(::onInstallOutcome)
+    }
+
+    /**
+     * Offers to reopen the web tool that was on screen when the unit lost power.
+     *
+     * ## It counts down in the open, and any touch stops it
+     *
+     * Turning the key and being handed a full-screen analysis tool, when all you
+     * wanted was the radio, is the kind of surprise a car should never produce.
+     * So the console draws normally and says what it is about to do in the LCD's
+     * own notice line — a slot that is already reserved, so nothing moves — and
+     * [onUserInteraction] cancels it. Touch anything at all and you simply stay
+     * on the console.
+     *
+     * The delay is not only manners. A Trusted Web Activity needs a warm Chrome
+     * session or it degrades to a Custom Tab with a toolbar, and the binding
+     * takes a moment; starting it now and launching in three seconds is what
+     * makes the resumed tool come back full screen.
+     */
+    private fun armResume(targetId: String?) {
+        if (targetId == null) return
+        if (Targets.byId(targetId)?.steps?.none { it is Step.Web } != false) return
+
+        resumeTarget = targetId
+        resumeTicks = RESUME_SECONDS
+        launcher.warmUp()
+        ui.post(resumeTick)
+    }
+
+    private val resumeTick = object : Runnable {
+        override fun run() {
+            val id = resumeTarget ?: return
+            if (resumeTicks <= 0) {
+                resumeTarget = null
+                notice = null
+                Targets.byId(id)?.let { target ->
+                    val outcome = launcher.launch(target, resume = true)
+                    // Remembered again: a second key cycle during the same
+                    // session should come back to the same place.
+                    if (outcome is LaunchOutcome.Started) resumeAfterRestart.remember(target.id)
+                }
+                return
+            }
+            notice = "${id.uppercase()} IN $resumeTicks"
+            renderSourceLine()
+            resumeTicks--
+            ui.postDelayed(this, 1_000L)
+        }
+    }
+
+    private fun cancelResume() {
+        if (resumeTarget == null) return
+        resumeTarget = null
+        ui.removeCallbacks(resumeTick)
+        notice = null
+        renderSourceLine()
+    }
+
+    /**
+     * Any touch or key at all, before the console has even decided what was
+     * touched. That is deliberately the widest possible net: the countdown is
+     * something the owner did not ask for, so anything that shows they are
+     * present should call it off.
+     */
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        cancelResume()
     }
 
     /**
@@ -272,6 +441,14 @@ class HomeActivity : Activity() {
         // it, because the shell holds START_ANY_ACTIVITY.
         lcd.setOnLongClickListener {
             if (modeSwitch.isMOpen) false else { dumpMatrix(); true }
+        }
+        // A tap on the display window opens the update pane. This is the whole
+        // one-tap path: an update announces itself in the source line directly
+        // below, and the thing it is written on is the control. No console key
+        // is spent, no existing key moves, and the M console is not involved —
+        // which matters because deploy.sh taps fixed coordinates.
+        lcd.setOnClickListener {
+            if (!modeSwitch.isMOpen) openOta()
         }
         // The M-mode counterpart: a full-scale sweep, so the tachometer can be
         // checked at all before there is anything to read.
@@ -384,7 +561,12 @@ class HomeActivity : Activity() {
         // The lamps are not touched here at all. They report links, and pressing
         // a button does not connect anything.
         val outcome = launcher.launch(target)
-        if (outcome is LaunchOutcome.Started) activeSource = key.spec.targetId
+        if (outcome is LaunchOutcome.Started) {
+            activeSource = key.spec.targetId
+            // Only a web tool: it is the only thing here that holds a session
+            // worth returning to, and the only thing that cannot restart itself.
+            if (outcome.step is Step.Web) resumeAfterRestart.remember(target.id)
+        }
         renderSourceLine()
     }
 
@@ -436,6 +618,275 @@ class HomeActivity : Activity() {
             it.hide()
             appList = it
         }
+
+    // ── Update pane ──────────────────────────────────────────────────────
+
+    private fun openOta() {
+        val pane = otaLayer ?: inflateOta()
+        console.visibility = View.INVISIBLE
+        pane.show(ota.snapshot())
+    }
+
+    private fun closeOta() {
+        if (otaLayer?.isVisible != true) return
+        otaLayer?.hide()
+        console.visibility = View.VISIBLE
+    }
+
+    private fun inflateOta(): OtaLayer =
+        OtaLayer(
+            root = findViewById<ViewStub>(R.id.ota_stub).inflate(),
+            onCheck = { ota.checkNow() },
+            onDownload = { ota.downloadNow() },
+            onInstall = { ota.installNow(consoleState()) },
+            onRollback = { ota.rollbackNow(consoleState()) },
+            onRemove = ::openRemove,
+            onGrantInstallPermission = ::openUnknownSourcesSettings,
+            onClose = ::closeOta,
+        ).also {
+            it.hide()
+            otaLayer = it
+        }
+
+    /**
+     * What the console looks like right now, for [ota] to refuse an update
+     * against.
+     *
+     * Assembled here rather than read inside the OTA package because every one
+     * of these facts already lives on this screen. Two readers of the same state
+     * eventually disagree, and the disagreement would show up as an update that
+     * went ahead during a datalog.
+     */
+    private fun consoleState(): ConsoleState = ConsoleState(
+        resumed = otaResumed,
+        mConsoleOpen = ::modeSwitch.isInitialized && modeSwitch.isMOpen,
+        resumeArmed = resumeTarget != null,
+        appListOpen = appList?.isVisible == true,
+        cableAttached = ::usb.isInitialized && usb.isCableAttached,
+        ds2Live = lastEngineSampleAt != 0L &&
+            SystemClock.elapsedRealtime() - lastEngineSampleAt <= DS2_LIVE_MS,
+        rpm = tach.rpm,
+    )
+
+    /**
+     * The Settings screen that grants REQUEST_INSTALL_PACKAGES.
+     *
+     * `[U]` on this vendor build — MtkSettings may not carry it. When it does
+     * not resolve the pane's message still names the ADB route, which always
+     * works, so this is a shortcut rather than the only way through.
+     */
+    private fun openUnknownSourcesSettings() {
+        val intent = ota.installer.unknownSourcesSettings()
+        if (intent == null) {
+            showNotice("SETTINGS UNAVAILABLE")
+            return
+        }
+        runCatching { startActivity(intent) }
+            .onFailure { showNotice("SETTINGS UNAVAILABLE") }
+    }
+
+    /**
+     * The one place OTA state reaches the screen. Always on the main thread —
+     * [OtaController] posts to [ui] and nothing in that package touches a View.
+     */
+    private fun onOtaChanged(snapshot: OtaSnapshot) {
+        // Only the two states the owner can act on take the slot. A check in
+        // progress, a wait for the clock and a failure all stay in the pane —
+        // the source line is a standing indicator, not a log.
+        otaNotice = when (val s = snapshot.status) {
+            is OtaStatus.Available -> s.entry.versionName
+            is OtaStatus.Ready -> s.entry.versionName
+            else -> null
+        }?.let { getString(R.string.ota_lcd_available, it) }
+        renderSourceLine()
+        // Only if it is actually up; binding a hidden pane would be wasted work
+        // on a thread budget this screen does not have to spare.
+        if (otaLayer?.isVisible == true) otaLayer?.bind(snapshot)
+    }
+
+    /**
+     * What became of the version we were installing when this process ended.
+     *
+     * Both messages use the transient notice line rather than the sticky OTA
+     * slot: they describe something that has already finished, and a standing
+     * indicator for a completed event is how a console ends up shouting about
+     * last Tuesday.
+     */
+    private fun onInstallOutcome(
+        outcome: OtaState.InstallOutcome,
+        home: HomeGuard.Verdict?,
+    ) {
+        // Checked first and independently of the outcome: an update that
+        // "succeeded" and left the unit without a home screen is the worst of
+        // the two results, not the better one.
+        if (home != null && !home.isHome) showLostHome()
+
+        when (outcome) {
+            is OtaState.InstallOutcome.Succeeded ->
+                showNotice(getString(R.string.ota_headline_updated, BuildConfig.VERSION_NAME))
+
+            is OtaState.InstallOutcome.Failed -> {
+                // Loud in the log, quiet on the console: the owner cannot act on
+                // this, and the next check will simply offer it again unless it
+                // has been poisoned.
+                Log.w(
+                    TAG,
+                    "install of versionCode=${outcome.versionCode} did not take " +
+                        "(attempt ${outcome.attempts}, poisoned=${outcome.poisoned})",
+                )
+                if (outcome.poisoned) showNotice("UPDATE FAILED")
+            }
+
+            is OtaState.InstallOutcome.None -> Unit
+        }
+    }
+
+    /**
+     * The launcher is installed and running, and the unit no longer treats it
+     * as HOME.
+     *
+     * Not dismissible, and deliberately drawn over everything: one power cycle
+     * from here the system falls back to
+     * `com.android.settings/.FallbackHome`, and getting out of that needs the
+     * car powered and on the right WiFi. The recovery command is on screen and
+     * in a notification (see OtaReplacedReceiver) because the screen may not be
+     * reachable either.
+     */
+    private fun showLostHome() {
+        val root = lostHome ?: findViewById<ViewStub>(R.id.lost_home_stub).inflate().also {
+            lostHome = it
+            it.findViewById<TextView>(R.id.lost_home_command).text =
+                HomeGuard.recoveryCommand(packageName)
+            it.findViewById<View>(R.id.lost_home_settings).setOnClickListener {
+                val intent = Intent(Settings.ACTION_HOME_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                runCatching { startActivity(intent) }
+                    .onFailure { showNotice("HOME SETTINGS UNAVAILABLE") }
+            }
+        }
+        root.visibility = View.VISIBLE
+        root.bringToFront()
+    }
+
+    // ── Removal ──────────────────────────────────────────────────────────
+    //
+    // Four steps, each gating the next, with the two recovery commands on
+    // screen throughout. The gating is the point: uninstalling the home screen
+    // while it is still the home screen leaves the unit on FallbackHome, and
+    // recovery from there needs the car powered and ADB (docs/04 §12).
+
+    private fun openRemove() {
+        if (!Relinquish.oemLauncherPresent(packageManager)) {
+            // Nothing to hand HOME to. Starting the procedure would walk
+            // somebody to the edge of a state nobody can get out of on the unit.
+            showNotice("NO OEM LAUNCHER")
+            Log.w(TAG, "removal refused: ${Relinquish.OEM_PACKAGE} is not installed")
+            return
+        }
+        removeState = RemoveLayer.State(done = 0)
+        val pane = removeLayer ?: inflateRemove()
+        closeOta()
+        console.visibility = View.INVISIBLE
+        pane.show(removeState, Relinquish.recoveryCommands(packageName))
+    }
+
+    private fun closeRemove() {
+        if (removeLayer?.isVisible != true) return
+        removeLayer?.hide()
+        console.visibility = View.VISIBLE
+    }
+
+    private fun inflateRemove(): RemoveLayer =
+        RemoveLayer(
+            root = findViewById<ViewStub>(R.id.remove_stub).inflate(),
+            onAdvance = ::advanceRemove,
+            onClose = ::closeRemove,
+        ).also {
+            it.hide()
+            removeLayer = it
+        }
+
+    private fun advanceRemove() {
+        when (removeState.done) {
+            0 -> {
+                removeState = when (val step = Relinquish.clearOurPreference(this)) {
+                    is Relinquish.Step.Failed ->
+                        RemoveLayer.State(done = 0, failedAt = 0, message = step.why)
+                    else ->
+                        RemoveLayer.State(done = 1, message = getString(R.string.remove_cleared))
+                }
+            }
+
+            1 -> {
+                // The chooser is somebody else's screen, so there is nothing to
+                // observe from here. The step advances on opening it, and step 3
+                // is what decides whether it worked.
+                runCatching { startActivity(Relinquish.picker(this)) }
+                    .onSuccess {
+                        removeState = RemoveLayer.State(
+                            done = 2,
+                            message = getString(R.string.remove_pick_hint),
+                        )
+                    }
+                    .onFailure {
+                        removeState = RemoveLayer.State(
+                            done = 1,
+                            failedAt = 1,
+                            message = getString(R.string.remove_no_oem),
+                        )
+                    }
+            }
+
+            2 -> {
+                // Both halves: not us, AND the OEM launcher. "Not us" alone also
+                // describes a unit with no home screen at all.
+                removeState = when (Relinquish.verify(this)) {
+                    is Relinquish.Step.Handed ->
+                        RemoveLayer.State(done = 3, message = getString(R.string.remove_handed))
+                    else -> RemoveLayer.State(
+                        done = 2,
+                        failedAt = 2,
+                        message = getString(R.string.remove_verify_failed),
+                    )
+                }
+            }
+
+            else -> {
+                // ConfirmInstaller refuses to uninstall this package through its
+                // ordinary path, structurally. Reaching the system dialog is
+                // therefore this flow's own business, and it only happens after
+                // step 3 said HOME has actually moved.
+                uninstallSelf()
+                removeState = RemoveLayer.State(done = 4)
+            }
+        }
+        removeLayer?.bind(removeState)
+    }
+
+    /**
+     * The last step. Asks the system to remove this package; the system shows
+     * its own confirmation, and if the owner says yes this process ends.
+     */
+    private fun uninstallSelf() {
+        val result = runCatching {
+            packageManager.packageInstaller.uninstall(
+                packageName,
+                android.app.PendingIntent.getBroadcast(
+                    this,
+                    0,
+                    Intent("$packageName.OTA_SELF_UNINSTALL").setPackage(packageName),
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                            android.app.PendingIntent.FLAG_MUTABLE
+                        } else 0,
+                ).intentSender,
+            )
+        }
+        result.onFailure {
+            Log.e(TAG, "self-uninstall request failed", it)
+            showNotice("UNINSTALL FAILED")
+        }
+    }
 
     private fun launchApp(entry: AppEntry) {
         closeAppList()
@@ -543,6 +994,7 @@ class HomeActivity : Activity() {
      */
     private fun renderSourceLine() {
         notice?.let { lcdSource.text = it; return }
+        otaNotice?.let { lcdSource.text = it; return }
         lcdSource.text = when (activeSource) {
             "radio" -> "RADIO"
             "video" -> "VIDEO"
@@ -578,6 +1030,11 @@ class HomeActivity : Activity() {
      * reading rather than freezing the last number on it.
      */
     private fun onEngineSample(sample: Mss54Sample) {
+        // The one new signal the OTA guard needed, and it costs a field
+        // assignment on a path that was already running. Ds2Link is untouched:
+        // "a reply arrived recently" is something this screen can observe, and
+        // the link has no business knowing why anyone is asking.
+        lastEngineSampleAt = SystemClock.elapsedRealtime()
         tach.rpm = sample.rpm
         coolantC = sample.coolantC
         oilC = sample.oilC
@@ -657,6 +1114,7 @@ class HomeActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        otaResumed = true
         applySystemUi()
         registerReceiver(clockReceiver, IntentFilter().apply {
             addAction(Intent.ACTION_TIME_TICK)     // manifest registration is not allowed
@@ -692,11 +1150,22 @@ class HomeActivity : Activity() {
         window.decorView.post {
             loadCatalogue()
             io.execute { BootWallpaper.applyIfNeeded(this) }
+            // Last, and later still: a few KB over a link that may not exist.
+            // Everything it touches — SharedPreferences, the network — happens
+            // on `io`, so this post only costs a queued Runnable.
+            ui.postDelayed(otaCheck, Ota.CHECK_DELAY_MS)
         }
     }
 
     override fun onPause() {
         super.onPause()
+        otaResumed = false
+        // Taken back rather than left to fire: onResume schedules it again, and
+        // a check that lands after onDestroy would reach a shut-down executor.
+        ui.removeCallbacks(otaCheck)
+        // Something else has the screen. Whatever it is, it is not what the
+        // countdown was about to open.
+        cancelResume()
         runCatching { unregisterReceiver(clockReceiver) }
         runCatching { unregisterReceiver(packageReceiver) }
         vehicle.stop()
@@ -714,7 +1183,9 @@ class HomeActivity : Activity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        ui.removeCallbacks(otaCheck)
         io.shutdownNow()
+        otaIo.shutdownNow()
         launcher.release()
     }
 
@@ -727,6 +1198,28 @@ class HomeActivity : Activity() {
      * True once another screen has actually covered us. See [onNewIntent].
      */
     private var wasStopped = false
+
+    /**
+     * Whether this screen is between onResume and onPause.
+     *
+     * Read by the self-update guard. The Activity's own lifecycle state is not
+     * queryable below API 29 without dragging in a LifecycleOwner, and this is
+     * two assignments.
+     */
+    private var otaResumed = false
+
+    /**
+     * This console being visible means the tool is not, so there is nothing to
+     * come back to. Unconditional on purpose — every moment the owner is looking
+     * at the launcher is a moment they are not mid-session somewhere else.
+     *
+     * Safe next to [armResume], which reads the record at the end of onCreate,
+     * before this ever runs.
+     */
+    override fun onStart() {
+        super.onStart()
+        resumeAfterRestart.forget()
+    }
 
     override fun onStop() {
         super.onStop()
@@ -760,6 +1253,8 @@ class HomeActivity : Activity() {
         if (!wasStopped) return
         wasStopped = false
         closeAppList()
+        closeOta()
+        closeRemove()
         // This path closes the M console without going through setMode, so its
         // two tear-downs are done by hand. Missing them would leave Chrome bound
         // for the rest of the session.
@@ -777,6 +1272,8 @@ class HomeActivity : Activity() {
     @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
     override fun onBackPressed() {
         when {
+            removeLayer?.isVisible == true -> closeRemove()
+            otaLayer?.isVisible == true -> closeOta()
             appList?.isVisible == true -> closeAppList()
             modeSwitch.isMOpen -> setMode(mOpen = false)
             else -> Unit   // Nothing sits above the home screen. Stay put.
@@ -835,6 +1332,25 @@ class HomeActivity : Activity() {
 
         /** See [applyBrightness]. 1.0 is this window's maximum, not the system's. */
         private const val DAY_BRIGHTNESS = 1f
+
+        /**
+         * How long the resume countdown runs.
+         *
+         * Long enough to read the line and reach the glass, short enough that
+         * somebody who does want the tool back is not waiting on ceremony. It
+         * also covers the Chrome binding, without which the tool would come
+         * back as a Custom Tab with a toolbar rather than full screen.
+         */
+        private const val RESUME_SECONDS = 3
+
+        /**
+         * How recently the DME must have answered for the link to count as live.
+         *
+         * Ds2Link's idle pace is slower than its fast pace, so this has to clear
+         * the slow one comfortably or a parked car with the cable in would look
+         * idle between polls.
+         */
+        private const val DS2_LIVE_MS = 60_000L
 
         /** Where the M key lives, and therefore which socket gets blanked. */
         private const val M_KEY_COL = 4

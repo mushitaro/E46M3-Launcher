@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The update pane.
+
+  ## Same chrome as the app list, and for the same reasons
+
+  Transparent root with the console hidden beneath it, so the carbon field is
+  not matched across a transition — it is literally the same View that never
+  moved. `clickable` on the root stops a tap between rows falling through to a
+  console key that is invisible but still laid out underneath. Header height,
+  side padding, divider and close control are the app list's, because two
+  overlays that differ only in content should not also differ in chrome.
+
+  ## What this pane is not allowed to do
+
+  docs/04 §9: no fabricated state. The elapsed reading comes from
+  elapsedRealtime, so it measures "since boot" and the footer says so; before
+  any check has run it reads CHECKED — rather than a plausible interval. And no
+  control appears that cannot act — when an action is unavailable the button is
+  removed and the reason is printed where it was, rather than greyed out.
+
+  Fonts follow the app list: sans-serif-condensed for chrome, and nothing here
+  is arbitrary text from another package, so everything can stay condensed.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ota_pane"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:clickable="true"
+    android:focusable="true">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/d_al_header_h"
+        android:paddingStart="@dimen/d_al_pad_h"
+        android:paddingEnd="@dimen/d_al_pad_h">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start|center_vertical"
+            android:text="@string/ota_title"
+            android:textColor="@color/d_al_title"
+            android:textSize="@dimen/d_al_title_size"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-condensed"
+            android:letterSpacing="0.28"
+            android:includeFontPadding="false" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|center_vertical"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Only present when a previous APK is kept AND this platform
+                 accepts a downgrade. On a platform that does not, there is no
+                 button, because there would be nothing behind it. -->
+            <TextView
+                android:id="@+id/ota_rollback"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/d_ota_btn_h"
+                android:layout_marginEnd="@dimen/d_ota_btn_gap"
+                android:paddingStart="@dimen/d_al_gap"
+                android:paddingEnd="@dimen/d_al_gap"
+                android:background="@drawable/d_ota_btn"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:textColor="@color/d_al_close_fg"
+                android:textSize="@dimen/d_ota_btn_size"
+                android:fontFamily="sans-serif-condensed"
+                android:letterSpacing="0.18"
+                android:includeFontPadding="false"
+                android:visibility="gone" />
+
+            <!-- Removed, not disabled, while a check is already running. -->
+            <TextView
+                android:id="@+id/ota_check"
+                android:layout_width="@dimen/d_ota_btn_w"
+                android:layout_height="@dimen/d_ota_btn_h"
+                android:layout_marginEnd="@dimen/d_ota_btn_gap"
+                android:background="@drawable/d_ota_btn"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="@string/ota_check"
+                android:textColor="@color/d_al_close_fg"
+                android:textSize="@dimen/d_ota_btn_size"
+                android:fontFamily="sans-serif-condensed"
+                android:letterSpacing="0.18"
+                android:includeFontPadding="false" />
+
+            <FrameLayout
+                android:id="@+id/ota_close"
+                android:layout_width="@dimen/d_al_close_w"
+                android:layout_height="@dimen/d_al_close_h"
+                android:background="@drawable/d_al_close"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="@string/applist_close">
+
+                <ImageView
+                    android:layout_width="@dimen/d_al_close_icon"
+                    android:layout_height="@dimen/d_al_close_icon"
+                    android:layout_gravity="center"
+                    android:src="@drawable/d_ic_home_solid"
+                    android:tint="@color/d_al_close_fg"
+                    android:contentDescription="@null" />
+            </FrameLayout>
+        </LinearLayout>
+    </FrameLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:background="@color/d_al_divider" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/d_al_pad_h"
+        android:paddingEnd="@dimen/d_al_pad_h"
+        android:paddingTop="@dimen/d_ota_body_pad_top">
+
+        <!-- What is going on, in as few words as can be true. -->
+        <TextView
+            android:id="@+id/ota_headline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/d_al_title"
+            android:textSize="@dimen/d_ota_headline_size"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-condensed"
+            android:letterSpacing="0.06"
+            android:includeFontPadding="false" />
+
+        <!-- The line that makes the headline actionable or diagnosable:
+             a size, a signer, or why nothing is happening. -->
+        <TextView
+            android:id="@+id/ota_detail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/d_ota_row_gap"
+            android:textColor="@color/d_al_badge_fg"
+            android:textSize="@dimen/d_ota_detail_size"
+            android:fontFamily="sans-serif-condensed"
+            android:letterSpacing="0.1"
+            android:includeFontPadding="false" />
+
+        <!-- The download bar. Shown only while bytes are moving; the fill is
+             scaled rather than re-laid-out, so a progress update is a
+             RenderNode property and not a measure pass. -->
+        <FrameLayout
+            android:id="@+id/ota_progress"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/d_ota_bar_h"
+            android:layout_marginTop="@dimen/d_ota_row_gap"
+            android:background="@drawable/d_ota_bar"
+            android:visibility="gone">
+
+            <View
+                android:id="@+id/ota_progress_fill"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/d_lit" />
+        </FrameLayout>
+
+        <!-- The one-tap control. Removed, never greyed: when it cannot act the
+             reason is printed in the detail line instead. -->
+        <TextView
+            android:id="@+id/ota_action"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/d_ota_action_h"
+            android:layout_marginTop="@dimen/d_ota_action_gap"
+            android:minWidth="@dimen/d_ota_action_min_w"
+            android:paddingStart="@dimen/d_ota_action_pad"
+            android:paddingEnd="@dimen/d_ota_action_pad"
+            android:background="@drawable/d_ota_btn"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:textColor="@color/d_al_title"
+            android:textSize="@dimen/d_ota_action_size"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-condensed"
+            android:letterSpacing="0.18"
+            android:includeFontPadding="false"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/ota_notes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/d_ota_row_gap"
+            android:textColor="@color/d_al_name"
+            android:textSize="@dimen/d_ota_note_size"
+            android:fontFamily="sans-serif-condensed"
+            android:lineSpacingExtra="4px"
+            android:includeFontPadding="false"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:background="@color/d_al_row_rule" />
+
+    <!-- Provenance. What is installed, which commit it came from, and how long
+         ago this was last checked — the three things anyone debugging an update
+         from the driver's seat needs before they need anything else. -->
+    <TextView
+        android:id="@+id/ota_footer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/d_al_pad_h"
+        android:paddingEnd="@dimen/d_al_pad_h"
+        android:paddingTop="@dimen/d_ota_row_gap"
+        android:paddingBottom="@dimen/d_ota_row_gap"
+        android:textColor="@color/d_al_count"
+        android:textSize="@dimen/d_ota_foot_size"
+        android:fontFamily="sans-serif-condensed"
+        android:letterSpacing="0.1"
+        android:includeFontPadding="false" />
+</LinearLayout>

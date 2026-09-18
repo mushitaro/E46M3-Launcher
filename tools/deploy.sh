@@ -83,6 +83,25 @@ else
 fi
 adb shell "rm -f /sdcard/p.txt"
 
+# The OTA subsystem can find and verify an update on its own, but applying one
+# needs REQUEST_INSTALL_PACKAGES — a manifest permission backed by an app-op
+# that starts un-granted. Without it the update pane says so and offers a route
+# to Settings; with it, applying an update is one tap on the console.
+#
+# Granted here because this script is already the channel that has the device.
+# Idempotent, and a failure is not fatal: the unit still updates itself right up
+# to the point of installing.
+if adb shell "appops set app.tsunagi.e46m3.launcher REQUEST_INSTALL_PACKAGES allow" 2>/dev/null; then
+    state=$(adb shell "appops get app.tsunagi.e46m3.launcher REQUEST_INSTALL_PACKAGES" | tr -d '
+')
+    case "$state" in
+        *allow*) ok "install permission: $state" ;;
+        *)       bad "install permission not granted: ${state:-no answer}" ;;
+    esac
+else
+    bad "could not set the install app-op — OTA will find updates but not apply them"
+fi
+
 adb shell "am start -a android.intent.action.MAIN -c android.intent.category.HOME" >/dev/null 2>&1
 sleep 5
 adb exec-out screencap -p > "$OUTDIR/home.png" && ok "home.png"
@@ -101,6 +120,23 @@ case "$focus" in
     *chrome*) ok "TUNER is up" ;;
     *)        bad "TUNER did not open" ;;
 esac
+
+# Closing and reopening is not tidiness, it is the second half of the install.
+# There is no unconditional skipWaiting(), so when a worker is already present a
+# newly downloaded one parks in `waiting` and the page keeps showing the old
+# build. It activates when the last page controlled by the old worker goes away
+# — which is exactly what force-stopping Chrome does. Without this the deploy
+# is downloaded but not yet in use, and the screenshot below would show the
+# previous version while everything reported success.
+say "close and reopen, so the new worker takes over"
+adb shell "am force-stop com.android.chrome"
+sleep 2
+adb shell "am start -a android.intent.action.MAIN -c android.intent.category.HOME" >/dev/null 2>&1
+sleep 5
+adb shell input tap 920 419    # M
+sleep 6
+adb shell input tap 307 339    # TUNER
+sleep 15
 adb exec-out screencap -p > "$OUTDIR/tuner.png" && ok "tuner.png"
 
 # ── 5. Offline test ──────────────────────────────────────────────────────────
