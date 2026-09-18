@@ -18,6 +18,9 @@ build/
 app-launcher/.gradle/
 app-launcher/build/
 app-launcher/app/build/
+# Kotlin compile daemon scratch + crash logs. Build noise, not source.
+app-launcher/.kotlin/
+.kotlin/
 *.apk
 *.aab
 *.ap_
