@@ -377,6 +377,15 @@ adb pull /system/priv-app               device-extract/apks/
 
 ---
 
+## ライセンス
+
+このプロジェクトのために書かれたコードは **[MIT](LICENSE)** です。
+
+MIT が及ばないものが 2 つあり、どちらも **[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)** に明記してあります。
+
+- `com/ts/main/common/ITsCommon.java` と `com/ts/can/carinfo/ICarInfoService.java` は、**ヘッドユニットのベンダーファームウェアから復元した** binder インターフェース宣言です。元の著作権者のものであり、端末に既にあるソフトウェア——ラジオ、Bluetooth、CAN サービス、外気温——と会話するためだけに含めています。宣言のみで、ベンダーの実装ロジックは再現していません。
+- BMW、///M、EONON、Android、Chrome、CarPlay などはそれぞれの権利者の標章です。これは個人所有の車 1 台のための社外品プロジェクトであり、いずれとも無関係です。
+
 ## 使用しているサードパーティ
 
 | | |
@@ -384,6 +393,6 @@ adb pull /system/priv-app               device-extract/apks/
 | `androidx.constraintlayout` 2.1.4、`androidx.recyclerview` 1.3.2、`androidx.browser` 1.8.0 | Apache-2.0 |
 | [`usb-serial-for-android`](https://github.com/mik3y/usb-serial-for-android) 3.9.0 | MIT |
 
-意図的に使っていないもの: Compose、AppCompat、Material Components。この画面は毎回のブート・`KILL_APPS`・低メモリ kill のたびにコールドスタートします。`speed-profile` の dexopt は API 28 以降のため使えず、in-order の Cortex-A7 上で 1 万個規模のメソッドが毎回 JIT されることになるからです。
+配布物には入らないテスト専用の 2 つを含む全リストは [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) §2 にあります。
 
-このリポジトリにはまだライセンスを定めていません。コードを再利用したい場合は issue を立てて聞いてください。
+意図的に使っていないもの: Compose、AppCompat、Material Components。この画面は毎回のブート・`KILL_APPS`・低メモリ kill のたびにコールドスタートします。`speed-profile` の dexopt は API 28 以降のため使えず、in-order の Cortex-A7 上で 1 万個規模のメソッドが毎回 JIT されることになるからです。

@@ -462,6 +462,23 @@ without it.
 
 ---
 
+## Licence
+
+**[MIT](LICENSE)**, for the code written for this project.
+
+Two things it does *not* cover, both spelled out in
+**[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)**:
+
+- `com/ts/main/common/ITsCommon.java` and `com/ts/can/carinfo/ICarInfoService.java`
+  are binder interface declarations **recovered from the head unit's own vendor
+  firmware**. They belong to their original author and are included solely so
+  this launcher can talk to software already on the device — the radio, the
+  Bluetooth stack, the CAN service, the outside-air temperature. Declarations
+  only; none of the vendor's logic is reproduced.
+- BMW, ///M, EONON, Android, Chrome, CarPlay and the rest are their owners'
+  marks. This is an aftermarket project for one privately owned car and is
+  affiliated with none of them.
+
 ## Third-party components
 
 | | |
@@ -469,10 +486,10 @@ without it.
 | `androidx.constraintlayout` 2.1.4, `androidx.recyclerview` 1.3.2, `androidx.browser` 1.8.0 | Apache-2.0 |
 | [`usb-serial-for-android`](https://github.com/mik3y/usb-serial-for-android) 3.9.0 | MIT |
 
+Full list, including the two test-only dependencies that ship in nothing, in
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) §2.
+
 Deliberately absent: Compose, AppCompat, Material Components. This screen cold
 starts on every boot, every `KILL_APPS` and every low-memory kill, on in-order
 Cortex-A7 cores where `speed-profile` dexopt (API 28+) is unavailable — so
 roughly ten thousand extra methods would be JIT-compiled every single time.
-
-No licence has been declared for this repository yet. If you want to reuse the
-code, please open an issue and ask.
