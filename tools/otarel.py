@@ -143,7 +143,13 @@ def cmd_emit(args):
     notes = []
     if args.notes_file:
         with open(args.notes_file, encoding="utf-8") as fh:
-            notes = [ln.strip().lstrip("-*").strip() for ln in fh if ln.strip()]
+            lines = [ln.rstrip("\n") for ln in fh]
+        # The pane renders each entry with its own bullet, so prose paragraphs
+        # must not become bullets. When the file marks its bullets, only those
+        # are taken and the surrounding prose is left for the GitHub release
+        # page; when it marks none, every non-empty line is one.
+        bullets = [ln.strip()[1:].strip() for ln in lines if ln.strip()[:1] in ("-", "*")]
+        notes = bullets if bullets else [ln.strip() for ln in lines if ln.strip()]
 
     entry = {
         "kind": "apk",
