@@ -1,4 +1,4 @@
-# E46M3 ///M Launcher — 設計メモ
+# E46M3 /// Launcher — 設計メモ
 
 **日付**: 2026-08-04
 **対象**: `app-launcher/`（`app.tsunagi.e46m3.launcher`）

@@ -1,4 +1,4 @@
-# E46M3 ///M Launcher
+# E46M3 /// Launcher
 
 *[日本語版はこちら / Japanese version](README.ja.md)*
 
@@ -50,11 +50,14 @@ Two specific risks, stated up front:
 **Check the unit, not the brand on the box.**
 
 These are white-label units: one ODM builds the hardware and many sellers
-rebrand it. The unit this was developed on was bought in Japan under the
-**ENEON** brand — but nothing in the firmware says so, and searching the whole
-device dump (system properties, `/sdcard`, all 23 vendor APKs) finds no trace of
-that name. The retail brand is a sticker. What the device reports about itself
-is the ODM identity, and that is the thing worth matching.
+rebrand it. This project was developed on an **EONON GA9450B** — but nothing in
+the firmware says so. Searching the whole device dump (system properties,
+`/sdcard`, all 23 vendor APKs) finds no trace of either "EONON" or "GA9450B".
+The retail brand is a sticker; what the device reports about itself is the ODM
+identity, and that is the thing worth matching.
+
+So if you have the same unit under a different brand it will still work, and a
+different EONON model may well not.
 
 So identify yours this way:
 
@@ -76,8 +79,9 @@ adb shell wm size                          # Physical size: 1024x600
 
 | | |
 |---|---|
+| Sold as | **EONON GA9450B** (per the owner). **Not recorded anywhere in the firmware** — do not rely on it to identify a unit |
 | Model / device / name | **`FF-5000`** |
-| Brand | **`FFKJ`** (the ODM — sold under various retail brands, e.g. ENEON in Japan) |
+| Brand | **`FFKJ`** — the ODM, not a retail brand |
 | Manufacturer | `alps` (MediaTek reference) |
 | Build ID | `FF_8227L_10` |
 | Fingerprint | `alps/full_8227L_demo/8227L_demo:8.1.0/O11019/1571038753:userdebug/test-keys` |
@@ -93,7 +97,7 @@ adb shell wm size                          # Physical size: 1024x600
 
 | Your unit | What to expect |
 |---|---|
-| `FF-5000` / `FFKJ`, API 27, 1024×600 | **The reference.** Everything described here applies |
+| `FF-5000` / `FFKJ`, API 27, 1024×600 | **The reference** (an EONON GA9450B). Everything described here applies |
 | Another MTK **8227L** unit with `com.ts.MainUI`, API 27, **1024×600** | Very likely fine. The console, the app list, the updates and the vehicle keys all key off things this family shares |
 | Same family but a **different resolution** (800×480, 1280×720…) | **The console will be laid out wrong.** Positions are in **px** on purpose — see `res/values/design.xml` for why — and there is no density scaling. It runs; it does not look right |
 | API 23–26 | Installs and runs, updates work. `targetSdk 27` means the framework will apply compatibility shims that were never tested |

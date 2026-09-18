@@ -10,7 +10,7 @@
   the app-list header, the notice line. Those live in values-ja/.
 -->
 <resources>
-    <string name="app_name" translatable="false">E46M3 ///M</string>
+    <string name="app_name" translatable="false">E46M3 ///</string>
 
     <string name="btn_settings" translatable="false">SET</string>
     <string name="btn_android_link" translatable="false">DROID</string>
