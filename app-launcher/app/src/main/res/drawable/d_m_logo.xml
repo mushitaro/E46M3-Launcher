@@ -1,25 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  The owner's stepped-M mark, white, for the M key.
+  The M key's mark: the TSUNAGI///M slash motif.
 
-  The design ships this as `assets/m-logo-white.png`. It is reproduced here as a
-  VectorDrawable instead: the glyph is a single axis-aligned staircase polygon
-  with no curves, so the vector is exact rather than an approximation, and it
-  costs a few hundred bytes instead of a bitmap on a 2GB device.
+  The app is TSUNAGI///Manifold (operator, 2026-10-20) and `///` is the brand's
+  own motif — not one of the seven M ICON function words, which name categories
+  (tsunagi-m-release §3.2). The M key is not a category: it is the door to all
+  of them, so it carries the brand rather than any one of its rooms.
 
-  The path was reconstructed by scanline analysis of the owner's master art
-  (iCloudDrive/M/Logo) and then corrected for two asymmetries about x=744 that
-  the reconstruction had introduced: 1017 -> 1014 (mirror of 474) and 916 -> 915
-  (mirror of 573). Every other pair was already exact: 343/1145, 590/898,
-  730/758, 386/1102. This is a designed, mirror-symmetric mark, so the noise was
-  removed rather than preserved.
+  What was here before was the owner's stepped-M glyph, traced from their master
+  art. It was correct when the M key was the only brand surface on the console;
+  it is superseded now that the product itself is named with the slashes.
+
+  ## Geometry
+
+  Identical to ic_launcher.xml's motif — `M2,30 L8,30 L16,2 L10,2 Z` and its two
+  siblings on a 32-unit canvas — scaled by 0.75 to this 24-unit viewport and
+  shifted 0.75 left so the ink is centred. The source runs x 2..32, drawn hard
+  against its own right edge, and a mark that sits off-centre inside a 160x56
+  key reads as a mark that was placed carelessly.
+
+  This is the same path data the TUNER key carried until 2026-10-28, when that
+  key took the `mapping` mark (docs/04 §10.14). The bars have not changed; they
+  have stopped standing for one tool and gone back to standing for the family.
+
+  Ink spans 22.5 x 21 of the viewport, so at d_m_logo_w = 22px the mark is about
+  20.6 x 19.25 px — the stepped M it replaces was 20.54 x 20. The key's
+  composition does not move.
+
+  ## White, not the tricolour
+
+  The source motif is ///M blue, indigo and red. Reproducing it here would put
+  #F11A22 on a key face that runs #CE1533 to #920A21: the red stripe would
+  disappear into the red. docs/04 §10.6 records exactly this failure for the
+  logo navy on the old TUNER key — an invisible stripe is not a faithful mark,
+  it is a two-bar mark.
+
+  Hard-coded white rather than @color/d_icon because Face.BRAND is the one face
+  ConsoleKeys.applyNight does not touch: the M key keeps its colour at night, so
+  this mark has no night variant to stay in step with.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="20.54dp"
-    android:height="20dp"
-    android:viewportWidth="1488"
-    android:viewportHeight="1449">
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M0,0 H343 V118 H474 V246 H590 V389 H730 V538 H758 V389 H898 V246 H1014 V118 H1145 V0 H1488 V1449 H1145 V607 H1102 V749 H915 V898 H573 V749 H386 V607 H343 V1449 H0 Z" />
+        android:pathData="M0.75 22.5 H5.25 L11.25 1.5 H6.75 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M6.75 22.5 H11.25 L17.25 1.5 H12.75 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12.75 22.5 H17.25 L23.25 1.5 H18.75 Z" />
 </vector>

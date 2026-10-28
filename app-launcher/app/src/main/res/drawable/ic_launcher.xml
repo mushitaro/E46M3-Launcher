@@ -2,9 +2,11 @@
 <!--
   The ///M slash mark on a black field.
 
-  This is the TSUNAGI ///M brand motif, and it is a DIFFERENT mark from the
-  stepped "M" glyph that goes on the M button (that one arrives in Phase 2, as a
-  VectorDrawable traced from the user's own logo).
+  This is the TSUNAGI///M brand motif. The M key on the console carries the same
+  motif in one flat white (d_m_logo) — the app is named TSUNAGI///Manifold, and
+  the M key is the door to the M tools rather than to any one category, so both
+  surfaces wear the brand. Until 2026-10-28 the M key carried the owner's
+  stepped-M glyph instead; that mark is superseded, not merely moved.
 
   The middle stripe is indigo-400 #9B84E8, not the logo navy #2B115A: the navy is
   1.33:1 on black and reads as a missing stripe rather than a dark one. Both
