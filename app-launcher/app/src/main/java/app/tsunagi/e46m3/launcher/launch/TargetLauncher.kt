@@ -152,11 +152,17 @@ class TargetLauncher(
      */
     private fun webIntent(url: String): Intent? {
         val chrome = chromePackage() ?: return null
-        val uri = if (resume) {
-            Uri.parse(url).buildUpon().appendQueryParameter("resume", "1").build()
-        } else {
-            Uri.parse(url)
-        }
+        // `from=manifold` tells the page it was opened from the car. The tool
+        // cannot learn that from `document.referrer`: Chrome does set it to
+        // android-app://<package>/ for a TWA's first navigation, but the WORKS
+        // gate sends a device with no session through m3's sign-in page, and
+        // the navigation back from there carries m3 as its referrer. The gate
+        // keeps path and query across that round trip (`ret`), so a parameter
+        // survives where the referrer does not.
+        val uri = Uri.parse(url).buildUpon().apply {
+            appendQueryParameter("from", "manifold")
+            if (resume) appendQueryParameter("resume", "1")
+        }.build()
         val colours = CustomTabColorSchemeParams.Builder()
             .setToolbarColor(Color.BLACK)
             .setNavigationBarColor(Color.BLACK)
@@ -164,6 +170,13 @@ class TargetLauncher(
 
         val intent = session?.let { live ->
             TrustedWebActivityIntentBuilder(uri)
+                // Chrome verifies the launch origin and these, nothing else. A
+                // tool that moves its own tab to another of our origins — the
+                // voice switch from TUNER to MONITORING does — gets the toolbar
+                // back on arrival unless that origin is named here, even though
+                // the origin's assetlinks.json and @string/asset_statements both
+                // already claim this app.
+                .setAdditionalTrustedOrigins(otherOrigins(uri))
                 .setColorScheme(CustomTabsIntent.COLOR_SCHEME_DARK)
                 .setDefaultColorSchemeParams(colours)
                 // Edge to edge, status bar included. Verification alone only
@@ -188,6 +201,10 @@ class TargetLauncher(
 
         return intent.apply { setPackage(chrome) }
     }
+
+    /** Every web target's origin except the one being launched. */
+    private fun otherOrigins(launch: Uri): List<String> =
+        WEB_ORIGINS.filter { it != originOf(launch) }
 
     private fun chromePackage(): String? = CHROME_PACKAGES.firstOrNull { pkg ->
         try {
@@ -327,5 +344,10 @@ class TargetLauncher(
         /** Every web target, read off the one table rather than repeated here. */
         private val WEB_URLS: List<String> =
             Targets.ALL.flatMap { it.steps }.filterIsInstance<Step.Web>().map { it.url }
+
+        private val WEB_ORIGINS: List<String> =
+            WEB_URLS.map { originOf(Uri.parse(it)) }.distinct()
+
+        private fun originOf(uri: Uri): String = "${uri.scheme}://${uri.authority}"
     }
 }

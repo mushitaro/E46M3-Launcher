@@ -121,10 +121,18 @@ class Ds2Link(
         running = false
         runCatching { context.unregisterReceiver(permissionReceiver) }
         handler?.removeCallbacksAndMessages(null)
+        // Captured, not read inside the post: the fields are cleared just below,
+        // on this thread, before the post runs — reading `worker` there found
+        // null and left every stopped thread alive.
+        val ending = worker
         handler?.post {
+            val held = portOrNull != null
             portOrNull?.close()
             portOrNull = null
-            worker?.quitSafely()
+            // The moment the cable is free for Chrome. Read against Chrome's
+            // claimInterface in logcat, this says whether the launcher still had it.
+            if (held) Log.i(TAG, "K+DCAN closed")
+            ending?.quitSafely()
         }
         worker = null
         handler = null
