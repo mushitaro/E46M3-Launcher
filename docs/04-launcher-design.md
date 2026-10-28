@@ -24,7 +24,7 @@
 | M モードの温度4連（水温／油温／吸気温／外気温） | **[V]** 実車で動作。`WTR 54°C OIL 54°C IAT 48°C OUT --°C`（§6.2） |
 | ボタンのインジケータ | **[V]** 実車で3つとも正しく消灯（未接続）。点灯側は未検証 |
 | TUNER | **[V] 全画面 TWA で動作**（public ビルドに対して。§10.5）。ステータスバーも消えている |
-| TUNER / MONITORING を WORKS へ | **[U]** キーは配線済み（§10.14）。**全画面は未成立** — 両 WORKS の `assetlinks.json` が 401（2026-10-28 実測） |
+| TUNER / MONITORING を WORKS へ | **[U]** キーは配線済み（§10.14）。assetlinks は TUNER WORKS が 200（配信済み）、MONITORING WORKS が 401（PR #7 待ち）。実車での全画面は未確認 |
 | 整備履歴 | 未実装。**M コンソールでは背景プレート**（§10.8）。位置 (3,0) は確保済み |
 | 昼間視認性 | **[U]** 実車確認は**まだできていない** — 投入時刻が 22:40 で夜モードだったため（§10.1） |
 | 起動中の壁紙 | **[V]** 実車で適用済み。次回キーオン時に見えるはず（§10.10） |
@@ -1018,6 +1018,16 @@ WORKS は m3 のオーナーゲートの内側にあり、ゲートは既定で�
 | `mss54hp-csl-convert-tuner.tsunagi.app`（public） | **200** |
 | `mss54hp-csl-convert-tuner-preview.pages.dev` | **401** `{"error":"unauthorized"}` |
 | `e46m3-monitoring-preview.pages.dev` | **401** |
+
+**同日、TUNER 側は解消した。** TUNER の `functions/_middleware.ts` の `publicPaths` に 1 行足し
+（`c8d3ddf`）、WORKS へ配信したあとの実測：
+
+| | 無認証での応答 |
+|---|---|
+| TUNER WORKS `/.well-known/assetlinks.json` | **200** `application/json`。package と証明書がこのアプリと一致 |
+| TUNER WORKS `/`、`/index.html`、`/api/sessions` | 401（ゲートは閉じたまま） |
+| Google Digital Asset Links API（Chrome が参照する側） | TUNER WORKS → `app.tsunagi.e46m3.launcher` / `8E:52:91:41…` |
+| MONITORING WORKS | まだ 401。E46M3-Monitoring PR #7（`human` 分類、運営者のレビュー待ち）。マージで `deploy-works.yml` が配信する |
 
 この状態で WORKS を開くと、Chrome は検証に失敗して**ツールバーを出す。エラーはどこにも出ない**
 （§10.5 と同じ失敗の形）。だから順序が決まっている：
