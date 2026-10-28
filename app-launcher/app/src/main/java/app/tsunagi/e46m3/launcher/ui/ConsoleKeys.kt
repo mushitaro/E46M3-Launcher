@@ -95,17 +95,20 @@ object ConsoleKeys {
     )
 
     /**
-     * The M console. Four keys, and four blanked sockets.
+     * The M console. Five keys, and three blanked sockets.
      *
-     * DIAG and 整備履歴 are not built, so their sockets carry carbon rather than
-     * a switch. They keep their positions — (2,0) and (3,0) — so that fitting
-     * them later is a one-line change to this table and moves nothing else, and
-     * they rise and sink with the console like every other plate.
+     * MONITORING took the socket DIAG had been holding at (2,0) — same place,
+     * same one-line change the table was shaped for. 整備履歴 keeps (3,0) and its
+     * plate: it is not written, and a socket that admits it is empty beats a key
+     * that fails when pressed.
      *
-     * TUNER carries no lamp: it opens a web tool, not a link to a device.
+     * Neither TUNER nor MONITORING carries a lamp. A lamp on this console
+     * reports whether a LINK is up, and both of these open a web tool through
+     * Chrome rather than connecting to a device.
      */
     val M_MODE: List<Spec> = listOf(
         Spec("tuner", 1, 0, R.drawable.d_ic_tuner, 0),
+        Spec("monitoring", 2, 0, R.drawable.d_ic_monitoring, 30),
         Spec("settings", 1, 1, R.drawable.d_ic_settings_m, 0),
         Spec("apps", 2, 1, R.drawable.d_ic_apps_m, 30),
         Spec("m_home", 3, 1, R.drawable.d_ic_back, 60),
@@ -117,13 +120,13 @@ object ConsoleKeys {
 
     /**
      * Every socket the M console leaves empty: the two outer columns, plus the
-     * two the unbuilt apps will one day take.
+     * one 整備履歴 will take when it is written.
      *
      * All of them are ordinary plates — sunk under an opaque home key in home
      * mode, risen in M mode — so nothing here is a special case.
      */
     val PLATES: List<Pair<Int, Int>> =
-        listOf(0 to 0, 0 to 1, 4 to 0, 4 to 1, 2 to 0, 3 to 0)
+        listOf(0 to 0, 0 to 1, 4 to 0, 4 to 1, 3 to 0)
 
     /**
      * One built key.

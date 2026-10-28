@@ -25,8 +25,13 @@
 
     <!-- M mode. These never appear on the keys — the design's M console is icons
          only — but TargetLauncher puts them in the notice line when a target
-         cannot be reached, so they still have to read as switch markings. -->
+         cannot be reached, so they still have to read as switch markings.
+
+         Both name a WORKS build. The marking is the target, not the build: a
+         console switch says what it opens, and "TUNER WORKS" would not fit the
+         LCD's notice line beside "UNAVAILABLE" anyway (Font57 at dot=2). -->
     <string name="btn_tuner" translatable="false">TUNER</string>
+    <string name="btn_monitoring" translatable="false">MONITOR</string>
     <string name="btn_home" translatable="false">HOME</string>
 
     <!-- Reserved-slot placeholders. Fixed width, so the value arriving later
@@ -39,22 +44,46 @@
     <string name="lcd_unit_c" translatable="false">°C</string>
 
     <!-- ── Digital Asset Links ──────────────────────────────────────────────
-         Our half of the two-sided statement that makes TUNER a Trusted Web
-         Activity instead of a Custom Tab. This half says which origin this app
-         claims; the other half lives at
+         Our half of the two-sided statement that makes a web tool a Trusted Web
+         Activity instead of a Custom Tab. This half says which origins this app
+         claims; the other half is each origin's own
+         /.well-known/assetlinks.json, naming this app's package and the SHA-256
+         of its signing certificate. Chrome fetches those at launch and verifies
+         both directions.
 
-           https://mss54hp-csl-convert-tuner.tsunagi.app/.well-known/assetlinks.json
+         If either side is missing or wrong it does NOT report an error — it
+         silently shows the toolbar, which is the only symptom (docs/04 §10.5).
 
-         and names this app's package and the SHA-256 of its signing
-         certificate. Chrome fetches that file at launch and verifies both
-         directions. If either side is missing or wrong it does NOT report an
-         error — it silently shows the toolbar, which is the only symptom.
+         Three origins, and all three stay listed:
+
+           - the two WORKS builds the M console opens (launch/Targets.kt)
+           - the public TUNER build, which this console no longer opens. Claimed
+             anyway: it costs nothing, and dropping it would mean a build pointed
+             back at the public tool loses full screen for a reason nobody would
+             find.
+
+         The WORKS origins sit behind m3's owner gate, which by default serves
+         an anonymous request 401 — including for assetlinks.json. Each app's
+         functions/_middleware.ts has to list that path in `publicPaths` or this
+         statement has nothing to pair with.
 
          The certificate is the release key, applied to debug builds too (see
-         app/build.gradle.kts), so the fingerprint in that file never changes
-         and this pairing never has to be redone. -->
+         app/build.gradle.kts), so the fingerprint in those files never changes
+         and the pairing never has to be redone. -->
     <string name="asset_statements" translatable="false">
         [{
+          \"relation\": [\"delegate_permission/common.handle_all_urls\"],
+          \"target\": {
+            \"namespace\": \"web\",
+            \"site\": \"https://mss54hp-csl-convert-tuner-preview.pages.dev\"
+          }
+        },{
+          \"relation\": [\"delegate_permission/common.handle_all_urls\"],
+          \"target\": {
+            \"namespace\": \"web\",
+            \"site\": \"https://e46m3-monitoring-preview.pages.dev\"
+          }
+        },{
           \"relation\": [\"delegate_permission/common.handle_all_urls\"],
           \"target\": {
             \"namespace\": \"web\",

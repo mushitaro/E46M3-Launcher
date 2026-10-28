@@ -34,8 +34,23 @@ object Targets {
 
     private const val MAIN_UI = "com.ts.MainUI"
 
-    /** The shipping TUNER build. Public HTTPS, so it needs nothing from us. */
-    private const val TUNER_URL = "https://mss54hp-csl-convert-tuner.tsunagi.app/"
+    // ── The M tools ──────────────────────────────────────────────────────
+    // The WORKS builds, not the public ones (operator, 2026-10-28). WORKS is
+    // where work on the car happens (tsunagi-m-release §1), and this console is
+    // in the car.
+    //
+    // Both sit behind m3's owner gate, so the first launch on a unit asks for
+    // sign-in; Chrome remembers it afterwards. The gate also decides whether
+    // these open FULL SCREEN: it must serve /.well-known/assetlinks.json to a
+    // request with no session, or Chrome silently falls back to a toolbar and
+    // says nothing anywhere (docs/04 §10.5). Measured 2026-10-28, both WORKS
+    // URLs answered 401 there — see docs/04 for what has to land first.
+
+    /** MSS54HP CSL CONVERT /// TUNER — WORKS. MAPPING category. */
+    private const val TUNER_URL = "https://mss54hp-csl-convert-tuner-preview.pages.dev/"
+
+    /** E46M3 /// MONITORING — WORKS. MONITORING category; WORKS only, no public build. */
+    private const val MONITORING_URL = "https://e46m3-monitoring-preview.pages.dev/"
 
     val ALL: List<LaunchTarget> = listOf(
         LaunchTarget(
@@ -159,19 +174,24 @@ object Targets {
         ),
 
         // ── M mode ───────────────────────────────────────────────────────────
-        // TUNER is deployed, public, MIT-licensed and has no provenance
-        // constraint, so it can be reached today. It opens in a Custom Tab; the
-        // moment assetlinks.json carries this app's signing fingerprint the same
-        // step becomes a full-screen Trusted Web Activity with no toolbar.
+        // Two web tools, both WORKS builds, both opened through Chrome as
+        // Trusted Web Activities. Full screen depends on a two-sided Digital
+        // Asset Links statement: this app's half is @string/asset_statements,
+        // and each origin must serve /.well-known/assetlinks.json naming this
+        // package and signing certificate — to an anonymous request.
         //
-        // DIAG and 整備履歴 have no entry here on purpose. DIAG is 未配信 — it has
-        // no remote at all — and 整備履歴 is not written. Their keys exist and are
-        // visibly dead (ConsoleKeys.Face.DEAD); giving them a target that fails
-        // at press time would be a worse lie than a switch that admits it is off.
+        // 整備履歴 still has no entry here, and its socket (3,0) stays a blanking
+        // plate. It is not written, and giving a key a target that fails at
+        // press time is a worse lie than a socket that admits it is empty.
         LaunchTarget(
             id = "tuner",
             labelRes = R.string.btn_tuner,
             steps = listOf(Step.Web(TUNER_URL)),
+        ),
+        LaunchTarget(
+            id = "monitoring",
+            labelRes = R.string.btn_monitoring,
+            steps = listOf(Step.Web(MONITORING_URL)),
         ),
         LaunchTarget(
             id = "m_home",

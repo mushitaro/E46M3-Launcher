@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The MONITORING key's mark: `monitoring`, from M ICON.
+
+  E46M3 /// MONITORING is the MONITORING category's tool, and in TSUNAGI///M the
+  category word IS the mark (tsunagi-m-release §3.2): three stepped slits with a
+  read-out line entering from each side.
+
+  Geometry: the eight quadrilaterals read out of
+  `M ICON/icons/monitoring-1024.png`, scaled to the 24-unit viewport the console
+  icons use. This is the WIDER of the two marks on this console at 94% of the
+  viewport, so it sets the shared scale and `mapping` (d_ic_tuner) is drawn
+  smaller to match rather than the other way round — per-mark scaling would break
+  the family (tsunagi-m-release §4.1).
+
+  One flat tone, like every icon here: @color/d_icon by day, @color/d_icon_night
+  at night, swapped by ConsoleKeys.applyNight with a SRC_IN filter. The declared
+  colour only matters before the first swap; naming the same token keeps the two
+  in step.
+
+  ## This key carries no lamp
+
+  The two outermost paths are the mark's read-out lines, not a status
+  indication. A lamp on this console reports whether a LINK is up (docs/04 §5),
+  and MONITORING is a web tool reached through Chrome — it is not a link to a
+  device, any more than TUNER is. Both keys are lampless for the same reason.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@color/d_icon"
+        android:pathData="M8.95 4.45 H11.84 L10.07 9.32 H7.21 Z" />
+    <path
+        android:fillColor="@color/d_icon"
+        android:pathData="M13.63 4.45 H16.5 L13.39 13.02 H10.5 Z" />
+    <path
+        android:fillColor="@color/d_icon"
+        android:pathData="M18.29 4.45 H21.16 L20.01 7.61 H17.14 Z" />
+    <path
+        android:fillColor="@color/d_icon"
+        android:pathData="M16.69 8.84 H19.55 L15.67 19.55 H12.8 Z" />
+    <path
+        android:fillColor="@color/d_icon"
+        android:pathData="M6.72 10.55 H9.62 L6.35 19.55 H3.48 Z" />
+    <!-- The read-out line entering from the right. -->
+    <path
+        android:fillColor="@color/d_icon"
+        android:pathData="M20.49 11.17 H23.25 L22.63 12.83 H19.9 Z" />
+    <!-- …and from the left. -->
+    <path
+        android:fillColor="@color/d_icon"
+        android:pathData="M1.34 12.96 H4.07 L3.48 14.6 H0.75 Z" />
+    <path
+        android:fillColor="@color/d_icon"
+        android:pathData="M10.04 14.28 H12.91 L11.01 19.55 H8.14 Z" />
+</vector>
