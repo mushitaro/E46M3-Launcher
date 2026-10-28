@@ -10,7 +10,11 @@
   the app-list header, the notice line. Those live in values-ja/.
 -->
 <resources>
-    <string name="app_name" translatable="false">E46M3 ///</string>
+    <!-- The product is TSUNAGI///Manifold (operator, 2026-10-20). The label is its short name: Android
+         shows it in the home-app chooser and the app list, where a long one is cut off. The package
+         id stays app.tsunagi.e46m3.launcher: an OTA update installs over the app already on a unit
+         only under the same id. -->
+    <string name="app_name" translatable="false">Manifold</string>
 
     <string name="btn_settings" translatable="false">SET</string>
     <string name="btn_android_link" translatable="false">DROID</string>
