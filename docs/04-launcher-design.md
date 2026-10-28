@@ -24,7 +24,7 @@
 | M モードの温度4連（水温／油温／吸気温／外気温） | **[V]** 実車で動作。`WTR 54°C OIL 54°C IAT 48°C OUT --°C`（§6.2） |
 | ボタンのインジケータ | **[V]** 実車で3つとも正しく消灯（未接続）。点灯側は未検証 |
 | TUNER | **[V] 全画面 TWA で動作**（public ビルドに対して。§10.5）。ステータスバーも消えている |
-| TUNER / MONITORING を WORKS へ | **[U]** キーは配線済み（§10.14）。assetlinks は TUNER WORKS が 200（配信済み）、MONITORING WORKS が 401（PR #7 待ち）。実車での全画面は未確認 |
+| TUNER / MONITORING を WORKS へ | **[U]** キーは配線済み（§10.14）。assetlinks は両 WORKS とも無認証で 200（2026-10-28 実測）。実車での全画面は未確認 |
 | 整備履歴 | 未実装。**M コンソールでは背景プレート**（§10.8）。位置 (3,0) は確保済み |
 | 昼間視認性 | **[U]** 実車確認は**まだできていない** — 投入時刻が 22:40 で夜モードだったため（§10.1） |
 | 起動中の壁紙 | **[V]** 実車で適用済み。次回キーオン時に見えるはず（§10.10） |
@@ -1008,7 +1008,7 @@ URI は ActivityManager の START 行では切られるため、**自前でロ�
 `mapping` の第三スリットのオレンジのセルは白にした — このコンソールのアイコンは全て単一トーン
 （§10.9）。
 
-#### 全画面はまだ成立していない [U]
+#### サーバー側は成立、実車の全画面は未確認 [U]
 
 WORKS は m3 のオーナーゲートの内側にあり、ゲートは既定で無認証の要求を 401 で返す。
 `/.well-known/assetlinks.json` もそこに含まれる。**2026-10-28 実測：**
@@ -1027,15 +1027,25 @@ WORKS は m3 のオーナーゲートの内側にあり、ゲートは既定で�
 | TUNER WORKS `/.well-known/assetlinks.json` | **200** `application/json`。package と証明書がこのアプリと一致 |
 | TUNER WORKS `/`、`/index.html`、`/api/sessions` | 401（ゲートは閉じたまま） |
 | Google Digital Asset Links API（Chrome が参照する側） | TUNER WORKS → `app.tsunagi.e46m3.launcher` / `8E:52:91:41…` |
-| MONITORING WORKS | まだ 401。E46M3-Monitoring PR #7（`human` 分類、運営者のレビュー待ち）。マージで `deploy-works.yml` が配信する |
+
+**MONITORING も同日に解消した。** E46M3-Monitoring PR #7（`d5f708e`）で TUNER と同じ
+`assetlinks.json` を置き、`publicPaths` に同じ 1 行を足した。マージだけでは配信されない —
+`deploy-works.yml` は秘密値が無く "Not configured" と書いて成功で終わり、何も出さない。
+配信は `npm run deploy` を手で。そのあとの実測：
+
+| | 無認証での応答 |
+|---|---|
+| MONITORING WORKS `/.well-known/assetlinks.json` | **200** `application/json` |
+| MONITORING WORKS `/index.html`、`/ecu-data/index.json`、`/api/sessions` | 401（ゲートは閉じたまま） |
+| Google Digital Asset Links API | MONITORING WORKS → `app.tsunagi.e46m3.launcher` / `8E:52:91:41…` |
 
 この状態で WORKS を開くと、Chrome は検証に失敗して**ツールバーを出す。エラーはどこにも出ない**
 （§10.5 と同じ失敗の形）。だから順序が決まっている：
 
 1. 各アプリの `functions/_middleware.ts` の `publicPaths` に `'/.well-known/assetlinks.json'` を足す
    （共通のゲート本体は変えない）。MONITORING にはファイル自体が無いので、TUNER と同じものを置く
-2. デプロイし、**両 URL が無認証で 200 を返すことを確かめる**（`wrangler pages deploy` が
-   `.well-known` を上げるかどうかも、ここで分かる）
+2. デプロイし、**両 URL が無認証で 200 を返すことを確かめる**（`wrangler pages deploy` は
+   `.well-known` も上げる。上の 200 がその証拠）
 3. そのうえでこのランチャーを出す
 
 ランチャー側の半分（`@string/asset_statements`）は3オリジンを宣言済みで、ビルド成果物から読み
@@ -1050,7 +1060,7 @@ WORKS は m3 のオーナーゲートの内側にあり、ゲートは既定で�
 | 2 | **昼間視認性** | 唯一残った未検証。投入が夜だったため。**日中に一度見るだけ**で足りる（§10.1） |
 | 2b | **外気温** | **否定で決着**（§6.1.6）。残る手は T2（天気キャッシュ・`NET` タグ）か、エンジン始動状態での再確認 |
 | 3 | **TWA 化** | **完了**（§10.5）。Service Worker も**実装・デプロイ済み**（§10.12）。残るのは実車でのオフライン実測のみ |
-| 4 | **MONITORING（旧 DIAG 枠）** | キーは配線済み（§10.14）。残るのは **両 WORKS の `assetlinks.json` を無認証で 200 にすること** — それまで全画面にならず、症状はツールバーだけで出る |
+| 4 | **MONITORING（旧 DIAG 枠）** | キーは配線済み、両 WORKS の `assetlinks.json` は無認証で 200（§10.14）。残るのは **実車で TUNER と MONITORING がツールバー無しで開くのを見ること** |
 | 5 | **整備履歴** | 未実装。ソケット (3,0) は確保済み。`ConsoleKeys.M_MODE` に1行足せば入る |
 | 6 | **R8 有効化** | Phase 2 の予定のまま。HOME アプリで minify 起因のクラッシュを後から見つけるのは最悪なので、有効化後に実機再テストが必須 |
 | 7 | **フレームタイム** | 未計測。エミュレータの SwiftShader では意味が無い。実機で `dumpsys gfxinfo … framestats` |
