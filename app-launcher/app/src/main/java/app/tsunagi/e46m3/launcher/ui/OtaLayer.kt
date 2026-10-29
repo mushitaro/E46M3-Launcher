@@ -155,7 +155,7 @@ internal class OtaLayer(
                     // here, so the button goes to the screen that can.
                     is BlockReason.Appop ->
                         showAction(R.string.ota_action_settings, onGrantInstallPermission)
-                    // The others usually clear in seconds — unplug the cable,
+                    // The others usually clear in seconds — stop the engine,
                     // close the M console. INSTALL stays, and pressing it
                     // re-evaluates rather than repeating the refusal.
                     is BlockReason.Console -> showAction(R.string.ota_action_install, onInstall)
@@ -248,27 +248,6 @@ internal class OtaLayer(
         action.visibility = View.VISIBLE
     }
 
-    /**
-     * One message per refusal.
-     *
-     * A refusal nobody can diagnose is a bug report, and this one would be filed
-     * from a driver's seat. Each string names the thing that would have been
-     * interrupted, so the owner knows what to change.
-     */
-    private fun blockMessage(reason: BlockReason): Int = when (reason) {
-        is BlockReason.Appop -> R.string.ota_block_appop
-        is BlockReason.Poisoned -> R.string.ota_block_poisoned
-        is BlockReason.Console -> when (reason.block) {
-            Block.NOT_RESUMED -> R.string.ota_block_not_resumed
-            Block.M_CONSOLE -> R.string.ota_block_m_console
-            Block.RESUME_ARMED -> R.string.ota_block_resume_armed
-            Block.APP_LIST -> R.string.ota_block_app_list
-            Block.CABLE -> R.string.ota_block_cable
-            Block.DS2_LIVE -> R.string.ota_block_ds2_live
-            Block.ENGINE_RUNNING -> R.string.ota_block_engine_running
-        }
-    }
-
     private fun bindNotes(entry: OtaPackage) {
         if (entry.releaseNotes.isEmpty()) return
         notes.text = entry.releaseNotes.joinToString("\n") { "・$it" }
@@ -277,6 +256,26 @@ internal class OtaLayer(
 
     companion object {
         private const val FADE_MS = 160L
+
+        /**
+         * One message per refusal. Shared with [OtaStrip], which prints the
+         * same reason on the home screen.
+         *
+         * A refusal nobody can diagnose is a bug report, and this one would be filed
+         * from a driver's seat. Each string names the thing that would have been
+         * interrupted, so the owner knows what to change.
+         */
+        fun blockMessage(reason: BlockReason): Int = when (reason) {
+            is BlockReason.Appop -> R.string.ota_block_appop
+            is BlockReason.Poisoned -> R.string.ota_block_poisoned
+            is BlockReason.Console -> when (reason.block) {
+                Block.NOT_RESUMED -> R.string.ota_block_not_resumed
+                Block.M_CONSOLE -> R.string.ota_block_m_console
+                Block.RESUME_ARMED -> R.string.ota_block_resume_armed
+                Block.APP_LIST -> R.string.ota_block_app_list
+                Block.ENGINE_RUNNING -> R.string.ota_block_engine_running
+            }
+        }
 
         /**
          * Download size, one decimal place, MB above a megabyte.

@@ -95,10 +95,12 @@ internal class Connectivity(context: Context) {
 
     private companion object {
         /**
-         * Three checks — which, at roughly one check per boot, means it spans
-         * more than one drive before giving up on waiting for validation. Long
-         * enough that a genuinely slow probe gets its chance; short enough that
-         * a device whose probe never fires is not stuck for a season.
+         * Three checks. Since 2026-10-29 an unvalidated link is retried every
+         * [Ota.UNVALIDATED_RETRY_MS] while the home screen is up, so this is
+         * about forty seconds rather than the several drives it was when a
+         * check ran once per boot. Long enough that a genuinely slow probe gets
+         * its chance; short enough that a device whose probe never fires
+         * finds its update on the same drive.
          */
         const val UNVALIDATED_PATIENCE = 3
     }

@@ -109,4 +109,21 @@ internal object Ota {
      * be broken by a bad clock.
      */
     const val CHECK_INTERVAL_MS = 30 * 60 * 1000L
+
+    /**
+     * How soon a check that found a link but no validation is tried again.
+     *
+     * A link that validates later says so through the network callback, which
+     * retries at once. One whose captive-portal probe never fires says nothing,
+     * and without this the streak in [Connectivity] would advance once per
+     * boot. See Connectivity.UNVALIDATED_PATIENCE.
+     */
+    const val UNVALIDATED_RETRY_MS = 20_000L
+
+    /**
+     * How long a burst of network callbacks is left to settle before one retry.
+     * Associating, getting an address and validating arrive as separate
+     * callbacks within a second or two of each other.
+     */
+    const val NETWORK_SETTLE_MS = 2_000L
 }

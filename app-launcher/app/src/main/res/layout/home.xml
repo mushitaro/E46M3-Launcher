@@ -55,6 +55,85 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
+        <!-- Everything that belongs to home mode's window and fades out as one
+             when the M console opens: the LCD, and the update line above it.
+             Not clickable itself, so a tap anywhere else falls through. -->
+        <FrameLayout
+            android:id="@+id/home_readout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        <!-- The update line (ui/OtaStrip.kt): version, what the last check
+             found, and UPDATE when there is one. Above the window, centred on
+             it, in the band the M-mode window only reaches after this has
+             faded. The reason line keeps its place when empty (INVISIBLE), so
+             nothing moves when a reason comes or goes. -->
+        <LinearLayout
+            android:id="@+id/ota_strip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_marginTop="@dimen/d_ota_strip_y"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/d_ota_btn_h"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/ota_strip_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:textColor="@color/d_al_badge_fg"
+                    android:textSize="@dimen/d_ota_strip_size"
+                    android:fontFamily="sans-serif-condensed"
+                    android:letterSpacing="0.1"
+                    android:singleLine="true"
+                    android:includeFontPadding="false" />
+
+                <!-- Removed, never greyed, like every control on this console. -->
+                <TextView
+                    android:id="@+id/ota_strip_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="@dimen/d_ota_btn_gap"
+                    android:paddingStart="@dimen/d_al_gap"
+                    android:paddingEnd="@dimen/d_al_gap"
+                    android:background="@drawable/d_ota_btn"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:textSize="@dimen/d_ota_btn_size"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-condensed"
+                    android:letterSpacing="0.18"
+                    android:singleLine="true"
+                    android:includeFontPadding="false"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/ota_strip_reason"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/d_ota_strip_gap"
+                android:clickable="true"
+                android:focusable="true"
+                android:textColor="@color/d_al_title"
+                android:textSize="@dimen/d_ota_strip_reason_size"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:maxWidth="@dimen/d_ota_strip_max_w"
+                android:includeFontPadding="false"
+                android:visibility="invisible" />
+        </LinearLayout>
+
         <!-- Home readout, pinned to the home window's content box. -->
         <FrameLayout
             android:id="@+id/lcd"
@@ -102,6 +181,7 @@
                 android:layout_gravity="bottom|end"
                 app:dotSize="2"
                 app:dotGap="1" />
+        </FrameLayout>
         </FrameLayout>
 
         <!-- M-mode readout, pinned to the enlarged window. Draws its own

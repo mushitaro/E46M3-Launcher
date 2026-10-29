@@ -103,8 +103,32 @@ internal class OtaController(
     fun checkNow() = check(force = true)
 
     /**
-     * From the pane, when the owner accepts a download on a metered link.
-     * A no-op unless there is something to fetch.
+     * The link changed. Checks again if the last attempt never got an answer.
+     *
+     * The first check runs [Ota.CHECK_DELAY_MS] after the home screen comes up,
+     * and on this unit that is usually before WiFi has associated: the unit
+     * cold-boots on every key cycle, and a phone hotspot takes longer than six
+     * seconds. Until 2026-10-29 that check found no network, spent the
+     * throttle, and nothing asked again for half an hour — so on the car an
+     * update was never found at all. A wait or a failure is not an answer, so
+     * a change of link ignores the throttle for it. A real answer (up to date,
+     * or an update found) is not asked again: that is still once per boot.
+     *
+     * Idle is left alone on purpose: before the first delayed check there is
+     * nothing to retry, and checking at the first callback would put two GETs
+     * inside the cold-start budget [Ota.CHECK_DELAY_MS] exists to protect.
+     */
+    fun onNetworkChanged() {
+        when (status) {
+            is OtaStatus.Waiting, is OtaStatus.Failed -> check(force = true)
+            else -> Unit
+        }
+    }
+
+    /**
+     * From the pane or the home screen's UPDATE, when the owner asks for the
+     * bytes — on a metered link this is the only way they move. A no-op unless
+     * there is something to fetch.
      */
     fun downloadNow() {
         val entry = (status as? OtaStatus.Available)?.entry ?: return
@@ -178,7 +202,7 @@ internal class OtaController(
     fun installNow(console: ConsoleState) {
         val ready = status as? OtaStatus.Ready
             ?: (status as? OtaStatus.Blocked)?.let { blocked ->
-                // Re-offered after a refusal: the cable may have come out since.
+                // Re-offered after a refusal: the engine may have stopped since.
                 val apk = Ota.apkFile(app, blocked.entry.packageName, blocked.entry.versionCode)
                 if (apk.isFile) OtaStatus.Ready(blocked.entry, apk) else null
             }

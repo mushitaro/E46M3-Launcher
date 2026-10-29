@@ -109,16 +109,26 @@
          ui/Font57.kt, which tools/gen_font57.py generates. Anything that only
          ever appears in the pane is prose, and prose is Japanese.
 
-         The LCD notice is measured, not estimated: at the source line's
-         dot=2/gap=1 (pitch 3), "UPDATE 0.2.0" is 171px. The LCD content box is
-         440 - 2*18 = 404px and the date line already holds ~132px of it from
-         the left, leaving ~272px. Adding "READY" would make it ~281px and it
-         would collide. So it is not added. -->
+         Nothing about updates reaches the LCD any more. Until 2026-10-29 its
+         source line said "UPDATE 0.3.1"; the update line above the window
+         (ui/OtaStrip.kt) replaced it, in the condensed face, so the register
+         there is the pane's: markings in Latin, reasons in Japanese. -->
     <string name="ota_title" translatable="false">UPDATE</string>
     <string name="ota_check" translatable="false">CHECK</string>
 
-    <!-- LCD notice. Format arg is the available versionName. -->
-    <string name="ota_lcd_available" translatable="false">UPDATE %1$s</string>
+    <!-- The update line. %1$s installed versionName, %2$s what the last check
+         found (an ota_headline_*), %3$s ota_checked_*. -->
+    <string name="ota_strip_status" translatable="false">MANIFOLD %1$s  ·  %2$s  ·  %3$s</string>
+    <string name="ota_strip_status_short" translatable="false">MANIFOLD %1$s  ·  %2$s</string>
+    <!-- %1$s the published versionName. -->
+    <string name="ota_strip_update" translatable="false">UPDATE %1$s</string>
+    <string name="ota_strip_available" translatable="false">%1$s AVAILABLE</string>
+    <string name="ota_strip_ready" translatable="false">%1$s READY</string>
+    <!-- %1$s bytes so far, %2$s total. -->
+    <string name="ota_strip_downloading" translatable="false">DOWNLOADING %1$s / %2$s</string>
+    <!-- %1$s a short token from the log (ota_detail_failed), kept so it can be
+         searched for. -->
+    <string name="ota_strip_failed">更新を確認できませんでした（%1$s）。ネットにつながると自動でもう一度確かめます。</string>
 
     <!-- Pane headlines. Switch markings, so uppercase Latin like the keys. -->
     <string name="ota_headline_idle" translatable="false">NOT CHECKED</string>
@@ -176,8 +186,8 @@
     <string name="ota_detail_checking">確認しています…</string>
     <string name="ota_detail_up_to_date">公開されている最新版が入っています。</string>
     <string name="ota_detail_clock">車両の時計がずれているため、接続を試みていません。時刻が同期されたら自動で再開します。</string>
-    <string name="ota_detail_offline">インターネットに接続されていません。</string>
-    <string name="ota_detail_unvalidated">接続はありますが到達性が確認できていません。次回また試します。</string>
+    <string name="ota_detail_offline">インターネットに接続されていません。つながると自動で確かめます。</string>
+    <string name="ota_detail_unvalidated">接続はありますが到達性が確認できていません。少し待ってからもう一度確かめます。</string>
     <!-- %1$s download size, %2$s the signing certificate, abbreviated. -->
     <string name="ota_detail_available">%1$s · 署名 %2$s</string>
     <!-- %1$s bytes so far, %2$s total. -->
@@ -194,8 +204,6 @@
     <string name="ota_block_m_console">M コンソール表示中です。閉じてから実行してください。</string>
     <string name="ota_block_resume_armed">前回のツールを復帰中です。少し待ってから実行してください。</string>
     <string name="ota_block_app_list">アプリ一覧を閉じてから実行してください。</string>
-    <string name="ota_block_cable">診断ケーブルが接続されています。抜いてから実行してください。</string>
-    <string name="ota_block_ds2_live">DME と通信中です。終了してから実行してください。</string>
     <string name="ota_block_engine_running">エンジン始動中は更新しません。停止してから実行してください。</string>
 
     <!-- The app-op that has not been granted yet. The ADB line is the reliable

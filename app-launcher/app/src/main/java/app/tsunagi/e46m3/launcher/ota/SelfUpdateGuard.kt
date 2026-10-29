@@ -34,14 +34,14 @@ internal object SelfUpdateGuard {
 
         state.appListOpen -> Block.APP_LIST
 
-        // The blunt version, on purpose: a K+DCAN cable in the port means
-        // somebody is working on the car. The softer reading — "only while a
-        // session is live" — is available from the same snapshot and can be
-        // adopted if the blunt one turns out to be annoying. Being annoying is
-        // a cheaper mistake than interrupting a datalog.
-        state.cableAttached -> Block.CABLE
-
-        state.ds2Live -> Block.DS2_LIVE
+        // No rule for the K+DCAN cable, and none for this screen's own DS2
+        // poll. Both were here until 2026-10-29: "a cable in the port means
+        // somebody is working on the car". On the car this runs in, the cable
+        // never comes out — it feeds the tachometer — so the rule refused every
+        // install, and the poll it would have interrupted is this launcher's
+        // own, which stops on pause anyway. A datalog runs in Chrome, a
+        // different process that replacing this package does not touch. And
+        // an install only ever starts from the owner's own press.
 
         // Engine running. Not because the install is unsafe, but because a car
         // that is running is a car somebody is about to drive.
@@ -62,9 +62,6 @@ internal data class ConsoleState(
     val mConsoleOpen: Boolean,
     val resumeArmed: Boolean,
     val appListOpen: Boolean,
-    val cableAttached: Boolean,
-    /** A DS2 reply arrived recently enough to call the link live. */
-    val ds2Live: Boolean,
     /** Null when the DME has said nothing; 0 when it has said "not running". */
     val rpm: Int?,
 )
@@ -75,7 +72,5 @@ internal enum class Block {
     M_CONSOLE,
     RESUME_ARMED,
     APP_LIST,
-    CABLE,
-    DS2_LIVE,
     ENGINE_RUNNING,
 }

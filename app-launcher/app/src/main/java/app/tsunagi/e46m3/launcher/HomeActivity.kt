@@ -7,6 +7,10 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -36,12 +40,14 @@ import app.tsunagi.e46m3.launcher.ota.OtaController
 import app.tsunagi.e46m3.launcher.ota.OtaSnapshot
 import app.tsunagi.e46m3.launcher.ota.OtaState
 import app.tsunagi.e46m3.launcher.ota.OtaStatus
+import app.tsunagi.e46m3.launcher.ota.WaitReason
 import app.tsunagi.e46m3.launcher.ui.AppListLayer
 import app.tsunagi.e46m3.launcher.ui.BootWallpaper
 import app.tsunagi.e46m3.launcher.ui.ConsoleKeys
 import app.tsunagi.e46m3.launcher.ui.DotMatrixView
 import app.tsunagi.e46m3.launcher.ui.ModeSwitch
 import app.tsunagi.e46m3.launcher.ui.OtaLayer
+import app.tsunagi.e46m3.launcher.ui.OtaStrip
 import app.tsunagi.e46m3.launcher.ui.RemoveLayer
 import app.tsunagi.e46m3.launcher.ui.TachView
 import app.tsunagi.e46m3.launcher.ui.WindowFrameView
@@ -161,15 +167,6 @@ class HomeActivity : Activity() {
     private var resumeTarget: String? = null
     private var resumeTicks = 0
 
-    /**
-     * When the DME last answered, on the monotonic clock.
-     *
-     * Only the self-update guard reads it. elapsedRealtime rather than the wall
-     * clock for the usual reason on this unit: the RTC cannot be trusted, and
-     * "was this within the last minute" must not become "was this before 2006".
-     */
-    private var lastEngineSampleAt: Long = 0L
-
     /** Finds published updates and verifies them. See [app.tsunagi.e46m3.launcher.ota.Ota]. */
     private lateinit var ota: OtaController
 
@@ -210,17 +207,47 @@ class HomeActivity : Activity() {
     }
 
     /**
-     * The sticky half of the LCD source line: set while a verified update is
-     * waiting, cleared when there is none.
+     * The update line above the display window: version, last result, UPDATE.
      *
-     * It outranks [activeSource], and that is a deliberate trade. The slot's
-     * original job is to name the last thing launched from this console, which
-     * is pleasant but not actionable; an update that is downloaded, verified and
-     * waiting IS actionable, and the LCD is the one-tap way to reach it. A
-     * transient [notice] still wins over both, so pressing a key still reports
-     * what it did, and the update line returns a couple of seconds later.
+     * It replaced "UPDATE 0.3.1" in the LCD's source line (2026-10-29). Saying
+     * it in both places would be saying it twice, and the LCD version was the
+     * one nobody found.
      */
-    private var otaNotice: String? = null
+    private lateinit var otaStrip: OtaStrip
+
+    /**
+     * Set by UPDATE when the bytes are not on disk yet: the owner asked for the
+     * install, so when the download finishes the system's install screen opens
+     * without a second press. Cleared on pause — an install screen appearing
+     * over whatever the owner went to instead would be a surprise, and the
+     * guard would refuse it anyway.
+     */
+    private var installWhenReady = false
+
+    /** Retries a check that found no network, once the link has settled. */
+    private val otaNetworkRetry = Runnable { ota.onNetworkChanged() }
+
+    /**
+     * Tells [ota] the link changed. Registered only while this screen is in
+     * front, like every other receiver here; coming back to the screen
+     * re-registers, and the system replays the current network at once, which
+     * is what retries a check that failed while a tool had the screen.
+     */
+    private val networkCallback: ConnectivityManager.NetworkCallback by lazy {
+        object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) = settleThenRetry()
+            override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) =
+                settleThenRetry()
+        }
+    }
+
+    /** Called on the connectivity thread. */
+    private fun settleThenRetry() {
+        ui.post {
+            ui.removeCallbacks(otaNetworkRetry)
+            ui.postDelayed(otaNetworkRetry, Ota.NETWORK_SETTLE_MS)
+        }
+    }
 
     /**
      * Outside air, from the head unit's own CAN service. Null on this car — see
@@ -256,6 +283,8 @@ class HomeActivity : Activity() {
         override fun onReceive(context: Context?, intent: Intent?) {
             renderClock()
             refreshNightMode()
+            // "CHECKED 3M AGO" is only true for the minute it was drawn in.
+            if (::ota.isInitialized) otaStrip.bind(ota.snapshot())
             // ACTION_TIME_CHANGED is what AlarmManagerService broadcasts after
             // an NTP sync, and on this unit that is usually the moment an RTC
             // reading 2006 becomes usable. A check parked for exactly that
@@ -313,6 +342,13 @@ class HomeActivity : Activity() {
         // Constructed here, but it touches neither storage nor the network
         // until something asks it to, and everything it does is on a worker.
         ota = OtaController(this, io, ui, otaIo, ::onOtaChanged)
+        otaStrip = OtaStrip(
+            root = findViewById(R.id.ota_strip),
+            onDetails = { if (!modeSwitch.isMOpen) openOta() },
+            onUpdate = ::onUpdatePressed,
+            onGrantInstallPermission = ::openUnknownSourcesSettings,
+        )
+        otaStrip.bind(ota.snapshot())
 
         // Whether the last self-update worked can only be observed here: the
         // install killed the process that started it. Consumed before it is
@@ -442,11 +478,11 @@ class HomeActivity : Activity() {
         lcd.setOnLongClickListener {
             if (modeSwitch.isMOpen) false else { dumpMatrix(); true }
         }
-        // A tap on the display window opens the update pane. This is the whole
-        // one-tap path: an update announces itself in the source line directly
-        // below, and the thing it is written on is the control. No console key
-        // is spent, no existing key moves, and the M console is not involved —
-        // which matters because deploy.sh taps fixed coordinates.
+        // A tap on the display window opens the update pane, as does a tap on
+        // the update line above it. The update itself is the line's UPDATE
+        // button (see OtaStrip). No console key is spent, no existing key
+        // moves, and the M console is not involved — which matters because
+        // deploy.sh taps fixed coordinates.
         lcd.setOnClickListener {
             if (!modeSwitch.isMOpen) openOta()
         }
@@ -483,7 +519,8 @@ class HomeActivity : Activity() {
 
         modeSwitch = ModeSwitch(
             window = findViewById<WindowFrameView>(R.id.window_frame),
-            clockLayer = lcd,
+            // The LCD and the update line above it, which fade out together.
+            clockLayer = findViewById(R.id.home_readout),
             tach = tach,
             homeSet = homePanels.map { it.second },
             mSet = mKeys.map { ModeSwitch.Panel(it.face, it.scrim, it.spec.staggerMs) },
@@ -662,11 +699,32 @@ class HomeActivity : Activity() {
         mConsoleOpen = ::modeSwitch.isInitialized && modeSwitch.isMOpen,
         resumeArmed = resumeTarget != null,
         appListOpen = appList?.isVisible == true,
-        cableAttached = ::usb.isInitialized && usb.isCableAttached,
-        ds2Live = lastEngineSampleAt != 0L &&
-            SystemClock.elapsedRealtime() - lastEngineSampleAt <= DS2_LIVE_MS,
         rpm = tach.rpm,
     )
+
+    /**
+     * The home screen's UPDATE: fetch whatever is not on disk yet, then open
+     * the system's install screen — one press for the whole way.
+     *
+     * Without the install permission the download still starts, and Settings
+     * opens on the screen that grants it, so the next press has nothing left
+     * to wait for. Every refusal after that is printed on the update line.
+     */
+    private fun onUpdatePressed() {
+        if (!ota.installer.isAvailable()) {
+            ota.downloadNow()
+            openUnknownSourcesSettings()
+            return
+        }
+        when (ota.snapshot().status) {
+            is OtaStatus.Available -> {
+                installWhenReady = true
+                ota.downloadNow()
+            }
+            is OtaStatus.Ready, is OtaStatus.Blocked -> ota.installNow(consoleState())
+            else -> Unit
+        }
+    }
 
     /**
      * The Settings screen that grants REQUEST_INSTALL_PACKAGES.
@@ -690,15 +748,27 @@ class HomeActivity : Activity() {
      * [OtaController] posts to [ui] and nothing in that package touches a View.
      */
     private fun onOtaChanged(snapshot: OtaSnapshot) {
-        // Only the two states the owner can act on take the slot. A check in
-        // progress, a wait for the clock and a failure all stay in the pane —
-        // the source line is a standing indicator, not a log.
-        otaNotice = when (val s = snapshot.status) {
-            is OtaStatus.Available -> s.entry.versionName
-            is OtaStatus.Ready -> s.entry.versionName
-            else -> null
-        }?.let { getString(R.string.ota_lcd_available, it) }
-        renderSourceLine()
+        otaStrip.bind(snapshot)
+
+        when (val s = snapshot.status) {
+            // The download UPDATE started has finished and verified: carry on
+            // to the install the owner asked for.
+            is OtaStatus.Ready -> if (installWhenReady) {
+                installWhenReady = false
+                ota.installNow(consoleState())
+            }
+            is OtaStatus.Downloading, is OtaStatus.Checking -> Unit
+            else -> {
+                installWhenReady = false
+                // A link that never validates says nothing more, so it is asked
+                // again on a timer. See Ota.UNVALIDATED_RETRY_MS.
+                if (s is OtaStatus.Waiting && s.reason == WaitReason.UNVALIDATED && otaResumed) {
+                    ui.removeCallbacks(otaNetworkRetry)
+                    ui.postDelayed(otaNetworkRetry, Ota.UNVALIDATED_RETRY_MS)
+                }
+            }
+        }
+
         // Only if it is actually up; binding a hidden pane would be wasted work
         // on a thread budget this screen does not have to spare.
         if (otaLayer?.isVisible == true) otaLayer?.bind(snapshot)
@@ -994,7 +1064,6 @@ class HomeActivity : Activity() {
      */
     private fun renderSourceLine() {
         notice?.let { lcdSource.text = it; return }
-        otaNotice?.let { lcdSource.text = it; return }
         lcdSource.text = when (activeSource) {
             "radio" -> "RADIO"
             "video" -> "VIDEO"
@@ -1030,11 +1099,6 @@ class HomeActivity : Activity() {
      * reading rather than freezing the last number on it.
      */
     private fun onEngineSample(sample: Mss54Sample) {
-        // The one new signal the OTA guard needed, and it costs a field
-        // assignment on a path that was already running. Ds2Link is untouched:
-        // "a reply arrived recently" is something this screen can observe, and
-        // the link has no business knowing why anyone is asking.
-        lastEngineSampleAt = SystemClock.elapsedRealtime()
         tach.rpm = sample.rpm
         coolantC = sample.coolantC
         oilC = sample.oilC
@@ -1155,6 +1219,14 @@ class HomeActivity : Activity() {
             // on `io`, so this post only costs a queued Runnable.
             ui.postDelayed(otaCheck, Ota.CHECK_DELAY_MS)
         }
+        // registerDefaultNetworkCallback is API 24; the OTA subsystem does not
+        // run below 23 at all (see Connectivity), and the target unit is 27.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            runCatching {
+                getSystemService(ConnectivityManager::class.java)
+                    ?.registerDefaultNetworkCallback(networkCallback)
+            }
+        }
     }
 
     override fun onPause() {
@@ -1163,6 +1235,14 @@ class HomeActivity : Activity() {
         // Taken back rather than left to fire: onResume schedules it again, and
         // a check that lands after onDestroy would reach a shut-down executor.
         ui.removeCallbacks(otaCheck)
+        ui.removeCallbacks(otaNetworkRetry)
+        installWhenReady = false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            runCatching {
+                getSystemService(ConnectivityManager::class.java)
+                    ?.unregisterNetworkCallback(networkCallback)
+            }
+        }
         // Something else has the screen. Whatever it is, it is not what the
         // countdown was about to open.
         cancelResume()
@@ -1184,6 +1264,7 @@ class HomeActivity : Activity() {
     override fun onDestroy() {
         super.onDestroy()
         ui.removeCallbacks(otaCheck)
+        ui.removeCallbacks(otaNetworkRetry)
         io.shutdownNow()
         otaIo.shutdownNow()
         launcher.release()
@@ -1342,15 +1423,6 @@ class HomeActivity : Activity() {
          * back as a Custom Tab with a toolbar rather than full screen.
          */
         private const val RESUME_SECONDS = 3
-
-        /**
-         * How recently the DME must have answered for the link to count as live.
-         *
-         * Ds2Link's idle pace is slower than its fast pace, so this has to clear
-         * the slow one comfortably or a parked car with the cable in would look
-         * idle between polls.
-         */
-        private const val DS2_LIVE_MS = 60_000L
 
         /** Where the M key lives, and therefore which socket gets blanked. */
         private const val M_KEY_COL = 4

@@ -11,12 +11,12 @@ import org.junit.Test
  * ## Why the order is tested and not just the set
  *
  * A refusal the owner cannot diagnose is a bug report filed from a driver's
- * seat. When two conditions hold at once — the M console is open AND the cable
- * is in — the message has to name the one they are most likely to act on, and
+ * seat. When two conditions hold at once — the M console is open AND the engine
+ * is running — the message has to name the one they are most likely to act on, and
  * that is a property of the ordering rather than of any single branch.
  *
  * These branches are otherwise almost untestable: reproducing "engine running,
- * cable in, resume armed" means a car, a laptop and a cold morning.
+ * resume armed" means a car, a laptop and a cold morning.
  */
 class SelfUpdateGuardTest {
 
@@ -26,8 +26,6 @@ class SelfUpdateGuardTest {
         mConsoleOpen = false,
         resumeArmed = false,
         appListOpen = false,
-        cableAttached = false,
-        ds2Live = false,
         rpm = null,
     )
 
@@ -59,20 +57,6 @@ class SelfUpdateGuardTest {
     }
 
     @Test
-    fun `a plugged in diagnostic cable blocks it`() {
-        // The blunt rule: a cable in the port means somebody is working on the
-        // car, whether or not a session happens to be live this second.
-        assertEquals(Block.CABLE, SelfUpdateGuard.check(idle().copy(cableAttached = true)))
-    }
-
-    @Test
-    fun `a live DS2 link blocks it even with no cable flag`() {
-        // Belt and braces: UsbWatch and Ds2Link answer different questions, and
-        // a cable that enumerated oddly must not open a hole here.
-        assertEquals(Block.DS2_LIVE, SelfUpdateGuard.check(idle().copy(ds2Live = true)))
-    }
-
-    @Test
     fun `a running engine blocks it`() {
         assertEquals(Block.ENGINE_RUNNING, SelfUpdateGuard.check(idle().copy(rpm = 820)))
     }
@@ -93,21 +77,14 @@ class SelfUpdateGuardTest {
 
     @Test
     fun `when several conditions hold, the most actionable one is named`() {
-        // Cable in, engine running, M console up. The owner can close the M
-        // console in one tap; stopping the engine is a bigger ask, and pulling
-        // the cable is a bigger one still. So the message names the console.
-        val busy = idle().copy(mConsoleOpen = true, cableAttached = true, rpm = 3000)
+        // Engine running and M console up. The owner can close the M console in
+        // one tap; stopping the engine is a bigger ask. So the message names
+        // the console.
+        val busy = idle().copy(mConsoleOpen = true, rpm = 3000)
         assertEquals(Block.M_CONSOLE, SelfUpdateGuard.check(busy))
 
-        // With the console closed, the cable outranks the engine for the same
-        // reason: it is the one that means somebody is mid-task.
-        assertEquals(Block.CABLE, SelfUpdateGuard.check(busy.copy(mConsoleOpen = false)))
-
-        // And with neither, the engine is what is left.
-        assertEquals(
-            Block.ENGINE_RUNNING,
-            SelfUpdateGuard.check(busy.copy(mConsoleOpen = false, cableAttached = false)),
-        )
+        // With the console closed, the engine is what is left.
+        assertEquals(Block.ENGINE_RUNNING, SelfUpdateGuard.check(busy.copy(mConsoleOpen = false)))
     }
 
     @Test
@@ -117,8 +94,6 @@ class SelfUpdateGuardTest {
         val worst = idle().copy(
             resumed = false,
             mConsoleOpen = true,
-            cableAttached = true,
-            ds2Live = true,
             rpm = 4000,
         )
         assertEquals(Block.NOT_RESUMED, SelfUpdateGuard.check(worst))
