@@ -242,6 +242,16 @@ adb shell appops set app.tsunagi.e46m3.launcher REQUEST_INSTALL_PACKAGES allow
 
 同じ versionCode で 2 回続けて「適用したのに起動しているのは別の版」になったら、その versionCode は永久に提示しない。1 回はタイミングの悪い電源断かもしれないが、2 回はビルド。ループが起きる場所が車のホーム画面なので。
 
+### 6.4 入れ替えのあと、ホームを自分で前に出す（2026-10-29、v0.3.3 から）
+
+車で v0.3.0 → v0.3.2 にしたとき、更新のあとに元のランチャー（`com.android.launcher`）が出て、次のキーサイクルまで戻らなかった。preferred HOME の記録は残っていた（再起動で戻り、HOME キーでも戻る）。入れ替えの最中に HOME が求められ、残っていたランチャーが前に出た。
+
+エミュレータで再現した。HOME をこのランチャーにしたまま、別のランチャーを前に出して入れ替えると、v0.3.2 まではそのランチャーが前に残る。v0.3.1 → v0.3.2 の正規の手順でも、一度は再現した。
+
+`OtaReplacedReceiver`（`MY_PACKAGE_REPLACED`。入れ替えが済んだあとに新しい版の側で走る）が、HOME の intent に自分のコンポーネントを名指しして `startActivity` する。HOME を失っていた場合も同じく開き、その画面の HOME SETTINGS から戻れるようにする。API 27 はレシーバーからの起動を許す（29 なら許さない。targetSdk は 27 に固定）。
+
+この直しは**新しい版のレシーバー**で効くので、v0.3.2 → v0.3.3 の 1 回はまだ v0.3.2 の振る舞い（元のランチャーが出たら HOME キーかキーサイクル）。v0.3.3 からの更新で効く。
+
 ---
 
 ## 7. TUNER は対象外
@@ -329,6 +339,21 @@ API 27 は hidden API 制限（API 28 導入）より前なのでリフレクシ
 | GATE-4 が改竄を検出すること | JSON の 1 文字を書き換え → 検証失敗、無改変 → 成功 |
 | マニフェスト生成・署名・全ローカルゲート | `tools/release.sh --dry-run` 通過 |
 
+### リリース前にエミュレータで通す（2026-10-29 から必須）
+
+v0.3.2 を単体テストとビルドだけで出し、車で何度もつまずいた（運営者「テストしてからリリースしろ」）。以後、リリースの前に必ずエミュレータで通す。
+
+- エミュレータは `C:\Users\kazuh\android-sdk\emulator\emulator.exe -avd e46m3`（API 27、google_apis x86、1024×600。ヘッドユニットと同じ API と画面）
+- **更新の道筋は、公開せずにローカルで通す。** `-PotaManifestUrl=http://10.0.2.2:8765/ota-manifest.json` で、今の版（車に入っている版のソース）と次の版をビルドする。次の版の APK と、`tools/otarel.py emit` で書いて OTA 鍵で署名したマニフェストを、PC で配る。API 27 は平文 HTTP を許す。配るサーバーは **HTTP/1.1 の keep-alive** にする（`python -m http.server` の既定の HTTP/1.0 は、エミュレータの NAT 越しに末尾の数バイトが欠け、ダウンロードが `unexpected end of stream` で止まる）
+- 通すこと：
+  - ホーム画面のスクリーンショット
+  - 今の版の UPDATE → システムのインストール画面 → インストール → 新しい版でホームに戻ること
+  - ダウンロードが失敗したときの表示（存在しない URL のマニフェストで）
+  - 別のランチャーを前に出したまま入れ替えたときにホームが戻ること（`adb install -r`）
+  - 時計をずらした状態（`adb root` → `settings put global auto_time 0` → `date`）で GitHub から取れること
+
+2026-10-29 に上のすべてを v0.3.3 で通した。時計を 2021 年にした状態でも、github.com とアセット用ホストの両方の証明書を `OtaTls` が受け入れた。マニフェストと APK を取り、検証し、インストールまで進んだ。
+
 ### 実機で要検証 [U]
 
 1. 非 shell 呼び出し元の `PackageInstaller` セッションがこのベンダービルドで動くか（このアプリは何かをインストールしたことが一度も無い）
@@ -336,9 +361,9 @@ API 27 は hidden API 制限（API 28 導入）より前なのでリフレクシ
 3. `ACTION_MANAGE_UNKNOWN_APP_SOURCES` / `ACTION_HOME_SETTINGS` が MtkSettings で解決するか
 4. ガレージ WiFi で `NET_CAPABILITY_VALIDATED` が立つか（§5.3）
 5. GitHub のアセットホストが `latest/download` のリダイレクト越しに `Range` を尊重するか — **GATE-5a が毎リリース検査するので黙って腐ることはない**
-6. **同一署名 in-place 置換で preferred HOME 記録が保持されるか。** AOSP は保持すると言っている。本設計最大の賭けであり、だからこそ GATE-1・`HomeGuard`・バナー・通知・印字される ADB 行が互いに独立して存在する
+6. **同一署名 in-place 置換で preferred HOME 記録が保持されるか。** 保持される（車、2026-10-29）。ただし入れ替えの最中に元のランチャーが前に出ることがある（§6.4）。GATE-1・`HomeGuard`・バナー・通知・印字される ADB 行は、記録が失われたときのために残す
 7. `getPackageArchiveInfo(GET_SIGNATURES)` が AGP 8.7 既定の署名出力に対して非 null を返すか（GATE-2 の v1/v2 が PC 側の証明、端末側の「null はハード失敗」が backstop）
-8. **NTP が RTC を実際に補正するか** = WiFi 起動後に `ACTION_TIME_CHANGED` が本当に飛ぶか。飛ばないなら延期したチェックはキーサイクル内に再開せず、平文 HTTP ミラー（自前ホスト + 独自署名で完全性は担保済み、`network_security_config` でそのホストのみ cleartext 許可）が任意から必須に格上げされる
+8. ~~NTP が RTC を実際に補正するか~~ — 補正されない（運営者、2026-10-29：時計が合うことがない）。時計に頼る仕組みはすべて外した（§2.1 `OtaTls`）
 9. 削除フローの段 2–4（§8）
 
 ### 実機手順

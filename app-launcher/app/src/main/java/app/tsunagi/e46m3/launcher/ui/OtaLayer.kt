@@ -107,10 +107,11 @@ internal class OtaLayer(
                 accentHeadline(snapshot, status.entry)
                 // Metered is the only way to reach Available with a link up: an
                 // unmetered check starts the download itself. Say which it is.
-                detail.text = if (snapshot.metered) {
-                    res.getString(R.string.ota_detail_metered)
-                } else {
-                    entryLine(status.entry)
+                detail.text = when {
+                    status.failure != null ->
+                        res.getString(R.string.ota_download_failed, status.failure)
+                    snapshot.metered -> res.getString(R.string.ota_detail_metered)
+                    else -> entryLine(status.entry)
                 }
                 action.text = res.getString(R.string.ota_action_download)
                 action.setOnClickListener { onDownload() }

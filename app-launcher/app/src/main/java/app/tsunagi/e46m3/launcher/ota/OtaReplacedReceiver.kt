@@ -9,6 +9,7 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 import app.tsunagi.e46m3.launcher.BuildConfig
+import app.tsunagi.e46m3.launcher.HomeActivity
 import app.tsunagi.e46m3.launcher.R
 
 /**
@@ -54,6 +55,7 @@ class OtaReplacedReceiver : BroadcastReceiver() {
             runCatching {
                 notificationManager(context)?.cancel(NOTIFICATION_ID)
             }
+            bringHomeBack(context)
             return
         }
 
@@ -64,6 +66,32 @@ class OtaReplacedReceiver : BroadcastReceiver() {
             "$LOST_HOME_TAG — recover with: ${HomeGuard.recoveryCommand(context.packageName)}",
         )
         notifyLostHome(context)
+        // Opened here too: its lost-HOME screen has the HOME SETTINGS button,
+        // which is a way back that needs no laptop.
+        bringHomeBack(context)
+    }
+
+    /**
+     * Puts this console back in front, by its own name.
+     *
+     * On the car (2026-10-29) a self-update left the unit on com.android.launcher
+     * until the next key cycle, although this app was still the preferred HOME:
+     * the unit asked for HOME while the package was mid-replace, got the only
+     * launcher left, and nothing asked again. The emulator restarts HOME after
+     * the replace and does not show it; the head unit is slower. This receiver
+     * runs once the replace is complete, so it is the moment to ask again.
+     *
+     * A HOME intent with the component named, so the activity lands where a
+     * home screen belongs rather than in an ordinary task. API 27 lets a
+     * receiver start an activity; 29 would not, and targetSdk is fixed at 27.
+     */
+    private fun bringHomeBack(context: Context) {
+        val home = Intent(Intent.ACTION_MAIN)
+            .addCategory(Intent.CATEGORY_HOME)
+            .setClassName(context.packageName, HomeActivity::class.java.name)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { context.startActivity(home) }
+            .onFailure { Log.w(Ota.TAG, "could not bring the home screen back", it) }
     }
 
     /**

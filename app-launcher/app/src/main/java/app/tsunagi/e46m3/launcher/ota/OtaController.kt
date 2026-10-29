@@ -479,7 +479,7 @@ internal class OtaController(
                 val apk = when (fetched) {
                     is OtaStore.Result.Ready -> fetched.apk
                     is OtaStore.Result.Failed -> {
-                        publish(OtaStatus.Failed(fetched.reason))
+                        publish(OtaStatus.Available(entry, failure = fetched.reason))
                         return@submit
                     }
                 }
@@ -572,8 +572,16 @@ internal sealed class OtaStatus {
 
     data class UpToDate(val versionName: String) : OtaStatus()
 
-    /** Published and newer, but not fetched — a metered link, or a failed fetch. */
-    data class Available(val entry: OtaPackage) : OtaStatus()
+    /**
+     * Published and newer, but not fetched — a metered link, or a failed fetch.
+     *
+     * @param failure why the last download stopped, when one did. The update
+     *        is still there to be had, so a download failure lands here rather
+     *        than in [Failed]: UPDATE stays on screen and pressing it tries
+     *        again. Found on the emulator before release (2026-10-29): as a
+     *        [Failed] it read "could not check" and left no button at all.
+     */
+    data class Available(val entry: OtaPackage, val failure: String? = null) : OtaStatus()
 
     data class Downloading(val entry: OtaPackage, val soFar: Long, val total: Long) : OtaStatus()
 

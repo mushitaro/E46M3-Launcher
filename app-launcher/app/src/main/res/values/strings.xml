@@ -128,6 +128,9 @@
     <string name="ota_strip_downloading" translatable="false">DOWNLOADING %1$s / %2$s</string>
     <!-- %1$s a short token from the log (ota_detail_failed), kept so it can be
          searched for. -->
+    <!-- %1$s a short token from the log, as above. The update is still
+         there; only the download stopped. -->
+    <string name="ota_download_failed">ダウンロードが途中で止まりました（%1$s）。UPDATE でもう一度試せます。</string>
     <string name="ota_strip_failed">更新を確認できませんでした（%1$s）。ネットにつながると自動でもう一度確かめます。</string>
 
     <!-- Pane headlines. Switch markings, so uppercase Latin like the keys. -->

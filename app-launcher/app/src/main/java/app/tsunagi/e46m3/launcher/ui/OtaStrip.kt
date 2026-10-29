@@ -62,6 +62,7 @@ internal class OtaStrip(
             is OtaStatus.Available -> {
                 action = onUpdate
                 actionLabel = res.getString(R.string.ota_strip_update, s.entry.versionName)
+                s.failure?.let { why = res.getString(R.string.ota_download_failed, it) }
                 res.getString(R.string.ota_strip_available, s.entry.versionName)
             }
 
