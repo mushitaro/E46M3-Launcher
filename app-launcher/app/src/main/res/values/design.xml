@@ -257,13 +257,4 @@
     <dimen name="d_ota_action_pad">26px</dimen>
     <dimen name="d_ota_action_size">19px</dimen>
     <dimen name="d_ota_action_gap">22px</dimen>
-
-    <!-- The update line above the home window (ui/OtaStrip.kt). Its last pixel
-         is about 140, clear of the window's top edge at d_win_y (157). The
-         buttons are the pane's, so a control looks the same wherever it is. -->
-    <dimen name="d_ota_strip_y">86px</dimen>
-    <dimen name="d_ota_strip_gap">6px</dimen>
-    <dimen name="d_ota_strip_size">14px</dimen>
-    <dimen name="d_ota_strip_reason_size">14px</dimen>
-    <dimen name="d_ota_strip_max_w">960px</dimen>
 </resources>

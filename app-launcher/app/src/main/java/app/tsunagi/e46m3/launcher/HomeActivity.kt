@@ -32,6 +32,7 @@ import app.tsunagi.e46m3.launcher.launch.ResumeAfterRestart
 import app.tsunagi.e46m3.launcher.launch.Step
 import app.tsunagi.e46m3.launcher.launch.TargetLauncher
 import app.tsunagi.e46m3.launcher.launch.Targets
+import app.tsunagi.e46m3.launcher.ota.BlockReason
 import app.tsunagi.e46m3.launcher.ota.ConsoleState
 import app.tsunagi.e46m3.launcher.ota.HomeGuard
 import app.tsunagi.e46m3.launcher.ota.Relinquish
@@ -47,7 +48,6 @@ import app.tsunagi.e46m3.launcher.ui.ConsoleKeys
 import app.tsunagi.e46m3.launcher.ui.DotMatrixView
 import app.tsunagi.e46m3.launcher.ui.ModeSwitch
 import app.tsunagi.e46m3.launcher.ui.OtaLayer
-import app.tsunagi.e46m3.launcher.ui.OtaStrip
 import app.tsunagi.e46m3.launcher.ui.RemoveLayer
 import app.tsunagi.e46m3.launcher.ui.TachView
 import app.tsunagi.e46m3.launcher.ui.WindowFrameView
@@ -207,22 +207,29 @@ class HomeActivity : Activity() {
     }
 
     /**
-     * The update line above the display window: version, last result, UPDATE.
+     * The update's line on the LCD — "UPDATE 0.3.4", "DL 1.2/3.1", "INSTALLING" —
+     * and only while there is something to act on or something moving. An
+     * up-to-date launcher says nothing; its version is in the update pane.
      *
-     * It replaced "UPDATE 0.3.1" in the LCD's source line (2026-10-29). Saying
-     * it in both places would be saying it twice, and the LCD version was the
-     * one nobody found.
+     * It outranks [activeSource]: that slot names the last thing launched
+     * from this console, which is pleasant but not actionable. A transient
+     * [notice] still wins over both.
+     *
+     * For a day (2026-10-29) this was a line of text above the window that
+     * always showed the version and the last check. The owner found it noise,
+     * and it sat outside the console's design, which puts notices in this
+     * slot and adds no rows. The owner had found "UPDATE 0.3.1" here.
      */
-    private lateinit var otaStrip: OtaStrip
+    private var otaNotice: String? = null
 
     /**
-     * Set by UPDATE when the bytes are not on disk yet: the owner asked for the
-     * install, so when the download finishes the system's install screen opens
-     * without a second press. Cleared on pause — an install screen appearing
-     * over whatever the owner went to instead would be a surprise, and the
-     * guard would refuse it anyway.
+     * Set by a tap on UPDATE. Carries the tap through the download to the
+     * system's install screen, and opens the update pane if anything stops it
+     * on the way, since the reason is prose the LCD cannot show. Cleared on
+     * pause: an install screen appearing over whatever the owner went to
+     * instead would be a surprise, and the guard would refuse it anyway.
      */
-    private var installWhenReady = false
+    private var updateRequested = false
 
     /** Retries a check that found no network, once the link has settled. */
     private val otaNetworkRetry = Runnable { ota.onNetworkChanged() }
@@ -283,8 +290,6 @@ class HomeActivity : Activity() {
         override fun onReceive(context: Context?, intent: Intent?) {
             renderClock()
             refreshNightMode()
-            // "CHECKED 3M AGO" is only true for the minute it was drawn in.
-            if (::ota.isInitialized) otaStrip.bind(ota.snapshot())
         }
     }
 
@@ -335,13 +340,6 @@ class HomeActivity : Activity() {
         // Constructed here, but it touches neither storage nor the network
         // until something asks it to, and everything it does is on a worker.
         ota = OtaController(this, io, ui, otaIo, ::onOtaChanged)
-        otaStrip = OtaStrip(
-            root = findViewById(R.id.ota_strip),
-            onDetails = { if (!modeSwitch.isMOpen) openOta() },
-            onUpdate = ::onUpdatePressed,
-            onGrantInstallPermission = ::openUnknownSourcesSettings,
-        )
-        otaStrip.bind(ota.snapshot())
 
         // Whether the last self-update worked can only be observed here: the
         // install killed the process that started it. Consumed before it is
@@ -471,13 +469,14 @@ class HomeActivity : Activity() {
         lcd.setOnLongClickListener {
             if (modeSwitch.isMOpen) false else { dumpMatrix(); true }
         }
-        // A tap on the display window opens the update pane, as does a tap on
-        // the update line above it. The update itself is the line's UPDATE
-        // button (see OtaStrip). No console key is spent, no existing key
+        // A tap on the display window is the update button while the LCD says
+        // UPDATE, and opens the update pane otherwise — the version, the last
+        // check and CHECK live there. No console key is spent, no existing key
         // moves, and the M console is not involved — which matters because
         // deploy.sh taps fixed coordinates.
         lcd.setOnClickListener {
-            if (!modeSwitch.isMOpen) openOta()
+            if (modeSwitch.isMOpen) return@setOnClickListener
+            if (offeredVersion(ota.snapshot().status) != null) onUpdatePressed() else openOta()
         }
         // The M-mode counterpart: a full-scale sweep, so the tachometer can be
         // checked at all before there is anything to read.
@@ -512,8 +511,7 @@ class HomeActivity : Activity() {
 
         modeSwitch = ModeSwitch(
             window = findViewById<WindowFrameView>(R.id.window_frame),
-            // The LCD and the update line above it, which fade out together.
-            clockLayer = findViewById(R.id.home_readout),
+            clockLayer = lcd,
             tach = tach,
             homeSet = homePanels.map { it.second },
             mSet = mKeys.map { ModeSwitch.Panel(it.face, it.scrim, it.spec.staggerMs) },
@@ -701,7 +699,8 @@ class HomeActivity : Activity() {
      *
      * Without the install permission the download still starts, and Settings
      * opens on the screen that grants it, so the next press has nothing left
-     * to wait for. Every refusal after that is printed on the update line.
+     * to wait for. Anything that stops it after that opens the update pane,
+     * which says why.
      */
     private fun onUpdatePressed() {
         if (!ota.installer.isAvailable()) {
@@ -709,14 +708,34 @@ class HomeActivity : Activity() {
             openUnknownSourcesSettings()
             return
         }
+        updateRequested = true
         when (ota.snapshot().status) {
-            is OtaStatus.Available -> {
-                installWhenReady = true
-                ota.downloadNow()
-            }
+            is OtaStatus.Available -> ota.downloadNow()
             is OtaStatus.Ready, is OtaStatus.Blocked -> ota.installNow(consoleState())
-            else -> Unit
+            else -> updateRequested = false
         }
+    }
+
+    /** The version a tap on the display window would install, or null. */
+    private fun offeredVersion(status: OtaStatus): String? = when (status) {
+        is OtaStatus.Available -> status.entry.versionName
+        is OtaStatus.Ready -> status.entry.versionName
+        // Pressing again re-evaluates a refusal — the engine may have stopped.
+        // A version that failed twice is not offered at all.
+        is OtaStatus.Blocked ->
+            if (status.reason is BlockReason.Poisoned) null else status.entry.versionName
+        else -> null
+    }
+
+    /** The LCD's line for an update, or null for none. Font57: Latin capitals only. */
+    private fun lcdLine(status: OtaStatus): String? = when (status) {
+        is OtaStatus.Downloading -> getString(
+            R.string.ota_lcd_downloading,
+            String.format(Locale.US, "%.1f", status.soFar / MIB),
+            String.format(Locale.US, "%.1f", status.total / MIB),
+        )
+        is OtaStatus.Installing -> getString(R.string.ota_headline_installing)
+        else -> offeredVersion(status)?.let { getString(R.string.ota_lcd_update, it) }
     }
 
     /**
@@ -741,25 +760,29 @@ class HomeActivity : Activity() {
      * [OtaController] posts to [ui] and nothing in that package touches a View.
      */
     private fun onOtaChanged(snapshot: OtaSnapshot) {
-        otaStrip.bind(snapshot)
+        val s = snapshot.status
+        otaNotice = lcdLine(s)
+        renderSourceLine()
 
-        when (val s = snapshot.status) {
-            // The download UPDATE started has finished and verified: carry on
+        if (updateRequested) when (s) {
+            // The download the tap started has finished and verified: carry on
             // to the install the owner asked for.
-            is OtaStatus.Ready -> if (installWhenReady) {
-                installWhenReady = false
-                ota.installNow(consoleState())
-            }
+            is OtaStatus.Ready -> ota.installNow(consoleState())
             is OtaStatus.Downloading, is OtaStatus.Checking -> Unit
+            is OtaStatus.Installing -> updateRequested = false
+            // Stopped. The reason is prose, in Japanese, and the LCD has
+            // neither the room nor the font for it; the pane has both.
             else -> {
-                installWhenReady = false
-                // A link that never validates says nothing more, so it is asked
-                // again on a timer. See Ota.UNVALIDATED_RETRY_MS.
-                if (s is OtaStatus.Waiting && s.reason == WaitReason.UNVALIDATED && otaResumed) {
-                    ui.removeCallbacks(otaNetworkRetry)
-                    ui.postDelayed(otaNetworkRetry, Ota.UNVALIDATED_RETRY_MS)
-                }
+                updateRequested = false
+                openOta()
             }
+        }
+
+        // A link that never validates says nothing more, so it is asked again
+        // on a timer. See Ota.UNVALIDATED_RETRY_MS.
+        if (s is OtaStatus.Waiting && s.reason == WaitReason.UNVALIDATED && otaResumed) {
+            ui.removeCallbacks(otaNetworkRetry)
+            ui.postDelayed(otaNetworkRetry, Ota.UNVALIDATED_RETRY_MS)
         }
 
         // Only if it is actually up; binding a hidden pane would be wasted work
@@ -1057,6 +1080,7 @@ class HomeActivity : Activity() {
      */
     private fun renderSourceLine() {
         notice?.let { lcdSource.text = it; return }
+        otaNotice?.let { lcdSource.text = it; return }
         lcdSource.text = when (activeSource) {
             "radio" -> "RADIO"
             "video" -> "VIDEO"
@@ -1229,7 +1253,7 @@ class HomeActivity : Activity() {
         // a check that lands after onDestroy would reach a shut-down executor.
         ui.removeCallbacks(otaCheck)
         ui.removeCallbacks(otaNetworkRetry)
-        installWhenReady = false
+        updateRequested = false
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             runCatching {
                 getSystemService(ConnectivityManager::class.java)
@@ -1416,6 +1440,8 @@ class HomeActivity : Activity() {
          * back as a Custom Tab with a toolbar rather than full screen.
          */
         private const val RESUME_SECONDS = 3
+
+        private const val MIB = 1024.0 * 1024.0
 
         /** Where the M key lives, and therefore which socket gets blanked. */
         private const val M_KEY_COL = 4

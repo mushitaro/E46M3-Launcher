@@ -257,8 +257,7 @@ internal class OtaLayer(
         private const val FADE_MS = 160L
 
         /**
-         * One message per refusal. Shared with [OtaStrip], which prints the
-         * same reason on the home screen.
+         * One message per refusal.
          *
          * A refusal nobody can diagnose is a bug report, and this one would be filed
          * from a driver's seat. Each string names the thing that would have been
