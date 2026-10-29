@@ -37,7 +37,7 @@ internal class OtaStore(private val context: Context) {
         /** Verified, renamed, installable. */
         data class Ready(val apk: File) : Result()
 
-        data class Failed(val reason: String, val clockFault: Boolean = false) : Result()
+        data class Failed(val reason: String) : Result()
     }
 
     /**
@@ -83,7 +83,7 @@ internal class OtaStore(private val context: Context) {
 
         val open = OtaHttp.open(entry.url, rangeFrom = have)
         if (open is OtaHttp.Open.Failed) {
-            return Result.Failed(open.reason, open.clockFault)
+            return Result.Failed(open.reason)
         }
         val body = (open as OtaHttp.Open.Ok).body
 
@@ -121,9 +121,8 @@ internal class OtaStore(private val context: Context) {
         } catch (e: IOException) {
             // The part file stays. A key-off here is the expected case, not an
             // error, and next time it resumes from where it stopped.
-            val clock = OtaClock.looksLikeClockFault(e)
             Log.i(Ota.TAG, "download interrupted at $written/${entry.size}", e)
-            return Result.Failed(if (clock) "CLOCK" else "INTERRUPTED", clock)
+            return Result.Failed("INTERRUPTED")
         }
 
         if (written != entry.size) {

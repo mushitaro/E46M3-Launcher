@@ -169,14 +169,12 @@ internal class OtaLayer(
             is OtaStatus.Waiting -> {
                 headline.text = res.getString(
                     when (status.reason) {
-                        WaitReason.CLOCK -> R.string.ota_headline_clock
                         WaitReason.OFFLINE -> R.string.ota_headline_offline
                         WaitReason.UNVALIDATED -> R.string.ota_headline_unvalidated
                     }
                 )
                 detail.text = res.getString(
                     when (status.reason) {
-                        WaitReason.CLOCK -> R.string.ota_detail_clock
                         WaitReason.OFFLINE -> R.string.ota_detail_offline
                         WaitReason.UNVALIDATED -> R.string.ota_detail_unvalidated
                     }

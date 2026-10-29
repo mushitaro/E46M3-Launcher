@@ -285,13 +285,6 @@ class HomeActivity : Activity() {
             refreshNightMode()
             // "CHECKED 3M AGO" is only true for the minute it was drawn in.
             if (::ota.isInitialized) otaStrip.bind(ota.snapshot())
-            // ACTION_TIME_CHANGED is what AlarmManagerService broadcasts after
-            // an NTP sync, and on this unit that is usually the moment an RTC
-            // reading 2006 becomes usable. A check parked for exactly that
-            // reason restarts here — no second receiver, no polling.
-            if (::ota.isInitialized && intent?.action == Intent.ACTION_TIME_CHANGED) {
-                ota.onTimeChanged()
-            }
         }
     }
 

@@ -29,8 +29,8 @@ import java.security.spec.X509EncodedKeySpec
  * 2006 (see [Ota]), and a certificate that is not yet valid fails the handshake
  * before any payload exists to check. Making integrity independent of TLS is
  * what lets a wrong clock be an availability problem instead of a security one
- * — and it is what would make a plain-HTTP mirror safe, if the deferred-check
- * path ever proves insufficient on the car.
+ * — and it is what makes it safe for [OtaTls] to check certificates without
+ * this unit's clock (2026-10-29), as it would a plain-HTTP mirror.
  *
  * ## RSA-2048, not Ed25519
  *

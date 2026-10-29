@@ -7,6 +7,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import javax.net.ssl.HttpsURLConnection
 
 /**
  * The OTA subsystem's HTTP client: `HttpURLConnection`, and nothing else.
@@ -44,14 +45,8 @@ internal object OtaHttp {
     sealed class Fetch {
         class Ok(val bytes: ByteArray, val finalUrl: String) : Fetch()
 
-        /**
-         * @param clockFault the failure is a certificate validity problem, i.e.
-         *        this device's clock, not the network. Worth its own field
-         *        because the two need completely different messages.
-         */
         data class Failed(
             val reason: String,
-            val clockFault: Boolean = false,
             val cause: Throwable? = null,
         ) : Fetch()
     }
@@ -83,7 +78,6 @@ internal object OtaHttp {
         class Ok(val body: Body) : Open()
         data class Failed(
             val reason: String,
-            val clockFault: Boolean = false,
             val cause: Throwable? = null,
         ) : Open()
     }
@@ -97,7 +91,7 @@ internal object OtaHttp {
      */
     fun get(url: String, maxBytes: Int): Fetch {
         return when (val open = open(url, rangeFrom = 0L)) {
-            is Open.Failed -> Fetch.Failed(open.reason, open.clockFault, open.cause)
+            is Open.Failed -> Fetch.Failed(open.reason, open.cause)
             is Open.Ok -> open.body.use { body ->
                 if (body.contentLength > maxBytes) {
                     return Fetch.Failed("TOO_LARGE_${body.contentLength}")
@@ -115,8 +109,7 @@ internal object OtaHttp {
                         buffer.write(chunk, 0, read)
                     }
                 } catch (e: IOException) {
-                    val clock = OtaClock.looksLikeClockFault(e)
-                    return Fetch.Failed(if (clock) "CLOCK" else "NETWORK", clock, e)
+                    return Fetch.Failed("NETWORK", e)
                 }
                 Log.i(Ota.TAG, "GET ${body.finalUrl} -> ${buffer.size()} bytes")
                 Fetch.Ok(buffer.toByteArray(), body.finalUrl)
@@ -152,6 +145,8 @@ internal object OtaHttp {
                     setRequestProperty("Accept-Encoding", "identity")
                     setRequestProperty("Accept", "*/*")
                     if (rangeFrom > 0L) setRequestProperty("Range", "bytes=$rangeFrom-")
+                    // Certificates checked without this unit's clock. See OtaTls.
+                    if (this is HttpsURLConnection) sslSocketFactory = OtaTls.socketFactory
                 }
 
                 val code = connection.responseCode
@@ -196,9 +191,8 @@ internal object OtaHttp {
                     )
                 )
             } catch (e: IOException) {
-                val clock = OtaClock.looksLikeClockFault(e)
-                Log.w(Ota.TAG, "GET $current failed (clockFault=$clock)", e)
-                return Open.Failed(if (clock) "CLOCK" else "NETWORK", clockFault = clock, cause = e)
+                Log.w(Ota.TAG, "GET $current failed", e)
+                return Open.Failed("NETWORK", cause = e)
             } catch (e: Exception) {
                 Log.w(Ota.TAG, "GET $current failed", e)
                 return Open.Failed("ERROR_${e.javaClass.simpleName}", cause = e)

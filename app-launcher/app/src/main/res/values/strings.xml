@@ -135,7 +135,6 @@
     <string name="ota_headline_checking" translatable="false">CHECKING</string>
     <string name="ota_headline_up_to_date" translatable="false">UP TO DATE</string>
     <string name="ota_headline_available" translatable="false">%1$s → %2$s</string>
-    <string name="ota_headline_clock" translatable="false">CLOCK WRONG</string>
     <string name="ota_headline_offline" translatable="false">NO NETWORK</string>
     <string name="ota_headline_unvalidated" translatable="false">NETWORK UNCONFIRMED</string>
     <string name="ota_headline_failed" translatable="false">CHECK FAILED</string>
@@ -185,7 +184,6 @@
     <string name="ota_detail_idle">この起動ではまだ確認していません。</string>
     <string name="ota_detail_checking">確認しています…</string>
     <string name="ota_detail_up_to_date">公開されている最新版が入っています。</string>
-    <string name="ota_detail_clock">車両の時計がずれているため、接続を試みていません。時刻が同期されたら自動で再開します。</string>
     <string name="ota_detail_offline">インターネットに接続されていません。つながると自動で確かめます。</string>
     <string name="ota_detail_unvalidated">接続はありますが到達性が確認できていません。少し待ってからもう一度確かめます。</string>
     <!-- %1$s download size, %2$s the signing certificate, abbreviated. -->

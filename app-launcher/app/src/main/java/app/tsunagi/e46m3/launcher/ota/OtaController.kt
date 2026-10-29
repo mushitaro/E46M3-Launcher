@@ -317,24 +317,6 @@ internal class OtaController(
         }
     }
 
-    /**
-     * The clock just changed, which on this unit usually means NTP corrected an
-     * RTC that was reading 2006. If a check was parked for exactly that reason,
-     * this is its trigger.
-     *
-     * Hooked into the `clockReceiver` the home screen already registers, so it
-     * costs no new receiver and no polling.
-     */
-    fun onTimeChanged() {
-        val current = status
-        if (current is OtaStatus.Waiting && current.reason == WaitReason.CLOCK &&
-            OtaClock.isPlausible()
-        ) {
-            Log.i(Ota.TAG, "clock became plausible — retrying the parked check")
-            check(force = true)
-        }
-    }
-
     // ── Check ───────────────────────────────────────────────────────────────
 
     private fun check(force: Boolean) {
@@ -386,20 +368,8 @@ internal class OtaController(
     }
 
     private fun performCheck(): OtaStatus {
-        // 1. The clock, before anything opens a socket. A certificate that is
-        //    not yet valid fails the handshake before any payload exists, so
-        //    there is nothing to be gained by trying — and a lot to be gained
-        //    by being able to say which of the two problems this is.
-        if (!OtaClock.isPlausible()) {
-            Log.i(
-                Ota.TAG,
-                "clock reads ${System.currentTimeMillis()}, below the floor " +
-                    "${OtaClock.floorMillis()} — not connecting",
-            )
-            return OtaStatus.Waiting(WaitReason.CLOCK)
-        }
-
-        // 2. The link.
+        // 1. The link. Not the clock: this unit's clock is never right, and
+        //    since 2026-10-29 nothing here depends on it (see OtaTls).
         when (val net = connectivity.assess(state.unvalidatedStreak)) {
             is Connectivity.State.Offline -> {
                 state.unvalidatedStreak = 0
@@ -416,20 +386,20 @@ internal class OtaController(
             }
         }
 
-        // 3. The manifest and its detached signature. Two GETs, both small.
+        // 2. The manifest and its detached signature. Two GETs, both small.
         val manifestUrl = BuildConfig.OTA_MANIFEST_URL
         val manifestBytes = when (val f = OtaHttp.get(manifestUrl, Ota.MANIFEST_MAX_BYTES)) {
             is OtaHttp.Fetch.Ok -> f.bytes
-            is OtaHttp.Fetch.Failed -> return f.toStatus()
+            is OtaHttp.Fetch.Failed -> return OtaStatus.Failed(f.reason)
         }
         val signature = when (
             val f = OtaHttp.get(Ota.signatureUrl(manifestUrl), Ota.MANIFEST_MAX_BYTES)
         ) {
             is OtaHttp.Fetch.Ok -> String(f.bytes, Charsets.US_ASCII)
-            is OtaHttp.Fetch.Failed -> return f.toStatus()
+            is OtaHttp.Fetch.Failed -> return OtaStatus.Failed(f.reason)
         }
 
-        // 4. Verify the bytes, then parse them. Never the other way round.
+        // 3. Verify the bytes, then parse them. Never the other way round.
         val manifest = when (
             val v = ManifestVerifier.verify(app, manifestBytes, signature, state.maxSerialSeen)
         ) {
@@ -441,7 +411,7 @@ internal class OtaController(
         }
         state.maxSerialSeen = manifest.serial
 
-        // 5. What does it say about us?
+        // 4. What does it say about us?
         val entry = manifest.apkFor(app.packageName) ?: return upToDate()
 
         if (!entry.runsOn(Build.VERSION.SDK_INT)) {
@@ -509,10 +479,7 @@ internal class OtaController(
                 val apk = when (fetched) {
                     is OtaStore.Result.Ready -> fetched.apk
                     is OtaStore.Result.Failed -> {
-                        publish(
-                            if (fetched.clockFault) OtaStatus.Waiting(WaitReason.CLOCK)
-                            else OtaStatus.Failed(fetched.reason)
-                        )
+                        publish(OtaStatus.Failed(fetched.reason))
                         return@submit
                     }
                 }
@@ -582,14 +549,6 @@ internal class OtaController(
     }
 }
 
-/**
- * A fetch failure becomes a *waiting* state when it is the clock, and a
- * *failure* otherwise. The distinction is the whole point of [OtaClock]: one of
- * these fixes itself when NTP lands, and the other does not.
- */
-private fun OtaHttp.Fetch.Failed.toStatus(): OtaStatus =
-    if (clockFault) OtaStatus.Waiting(WaitReason.CLOCK) else OtaStatus.Failed(reason)
-
 /** Why an install was refused. Each one is something the owner can act on. */
 internal sealed class BlockReason {
     /** The console is busy with something a restart would interrupt. */
@@ -603,7 +562,7 @@ internal sealed class BlockReason {
 }
 
 /** Why the subsystem is holding off. Each has its own message; none is an error. */
-internal enum class WaitReason { CLOCK, OFFLINE, UNVALIDATED }
+internal enum class WaitReason { OFFLINE, UNVALIDATED }
 
 internal sealed class OtaStatus {
     /** Nothing has been attempted yet this boot. */

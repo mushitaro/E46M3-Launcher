@@ -100,14 +100,12 @@ internal class OtaStrip(
             is OtaStatus.Waiting -> {
                 why = res.getString(
                     when (s.reason) {
-                        WaitReason.CLOCK -> R.string.ota_detail_clock
                         WaitReason.OFFLINE -> R.string.ota_detail_offline
                         WaitReason.UNVALIDATED -> R.string.ota_detail_unvalidated
                     }
                 )
                 res.getString(
                     when (s.reason) {
-                        WaitReason.CLOCK -> R.string.ota_headline_clock
                         WaitReason.OFFLINE -> R.string.ota_headline_offline
                         WaitReason.UNVALIDATED -> R.string.ota_headline_unvalidated
                     }

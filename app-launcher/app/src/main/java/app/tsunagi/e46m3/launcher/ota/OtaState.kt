@@ -14,7 +14,7 @@ import android.os.SystemClock
  * ## No wall-clock arithmetic lives here
  *
  * Nothing in this class compares `System.currentTimeMillis()` values. The RTC is
- * the value this whole subsystem is built not to trust (see [OtaClock]), so the
+ * the value this whole subsystem is built not to trust (docs/07 §2.5), so the
  * throttle runs on [SystemClock.elapsedRealtime], which is monotonic within a
  * boot and resets at key-off. That makes the throttle mean "once per boot, at
  * least [Ota.CHECK_INTERVAL_MS] apart", reached by a route a bad clock cannot
