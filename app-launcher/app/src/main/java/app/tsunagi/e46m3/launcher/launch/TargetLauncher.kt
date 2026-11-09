@@ -159,8 +159,12 @@ class TargetLauncher(
         // the navigation back from there carries m3 as its referrer. The gate
         // keeps path and query across that round trip (`ret`), so a parameter
         // survives where the referrer does not.
+        // `doors=settings` says this launcher can open the unit's Wi-Fi and
+        // clock settings for the page (SettingsDoorActivity), so a tool offers
+        // those buttons only where they work.
         val uri = Uri.parse(url).buildUpon().apply {
             appendQueryParameter("from", "manifold")
+            appendQueryParameter("doors", "settings")
             if (resume) appendQueryParameter("resume", "1")
         }.build()
         val colours = CustomTabColorSchemeParams.Builder()
