@@ -113,6 +113,28 @@
                 android:resource="@xml/usb_device_filter" />
         </activity>
 
+        <!-- The head unit's Wi-Fi and clock settings, for a web tool's header
+             (MONITORING, owner 2026-11-09). BROWSABLE because Chrome launches
+             nothing else from a page; the Settings app's own screens are not.
+             No window and out of Recents, like UsbAttachActivity. See
+             SettingsDoorActivity for what any page reaching it can and cannot do. -->
+        <activity
+            android:name=".SettingsDoorActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay">
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="manifold" android:host="settings" android:path="/wifi" />
+                <data android:scheme="manifold" android:host="settings" android:path="/datetime" />
+            </intent-filter>
+        </activity>
+
         <!-- The app's only manifest-registered receiver, and it has to be one:
              the moment worth observing is the one just after this process was
              killed and recreated by a package replace, when no runtime
